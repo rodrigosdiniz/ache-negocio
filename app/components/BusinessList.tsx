@@ -1,42 +1,42 @@
 // app/components/BusinessList.tsx
+'use client'
+
 import CompanyCard from './CompanyCard';
 
-const dummyBusinesses = [
+const mockCompanies = [
   {
-    name: 'Engenharia Total',
-    category: 'Engenheiros',
-    description: 'Especializados em projetos estruturais e laudos técnicos.',
-    whatsapp: '21999999999',
-    address: 'Rua A, 123 - Centro, RJ'
+    id: 1,
+    name: 'Auto Elétrica Luz Forte',
+    description: 'Especialistas em parte elétrica automotiva com 20 anos de experiência.',
+    image: 'https://via.placeholder.com/300x180?text=Auto+El%C3%A9trica',
+    rating: 4.5,
+    whatsapp: '(21) 99999-0001',
   },
   {
-    name: 'Eletricista Rápido',
-    category: 'Eletricistas',
-    description: 'Serviços elétricos residenciais e comerciais com segurança.',
-    whatsapp: '21988888888',
-    address: 'Rua B, 456 - Tijuca, RJ'
+    id: 2,
+    name: 'Mecânica Rápida RJ',
+    description: 'Serviços de mecânica leve e revisões em até 24h.',
+    image: 'https://via.placeholder.com/300x180?text=Mec%C3%A2nica',
+    rating: 4.8,
+    whatsapp: '(21) 98888-1122',
   },
   {
-    name: 'Contabilidade Silva',
-    category: 'Contadores',
-    description: 'Impostos, declarações e gestão financeira.',
-    whatsapp: '21977777777',
-    address: 'Av. das Américas, 8900 - Barra, RJ'
-  }
+    id: 3,
+    name: 'Refrigeração Polar',
+    description: 'Instalação e manutenção de ar-condicionado split residencial.',
+    image: 'https://via.placeholder.com/300x180?text=Refrigera%C3%A7%C3%A3o',
+    rating: 4.2,
+    whatsapp: '(21) 97777-3344',
+  },
 ];
 
 export default function BusinessList() {
   return (
-    <section style={{ padding: '2rem', background: '#fff' }}>
-      <h2 style={{ textAlign: 'center', marginBottom: '2rem' }}>Empresas em destaque</h2>
-      <div style={{
-        display: 'grid',
-        gap: '1.5rem',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-        justifyContent: 'center'
-      }}>
-        {dummyBusinesses.map((business, index) => (
-          <CompanyCard key={index} business={business} />
+    <section className="py-12 px-4">
+      <h2 className="text-3xl font-bold mb-8 text-center">Empresas em destaque</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {mockCompanies.map((company) => (
+          <CompanyCard key={company.id} company={company} />
         ))}
       </div>
     </section>
