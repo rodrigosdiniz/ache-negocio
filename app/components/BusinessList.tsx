@@ -1,29 +1,41 @@
-// components/BusinessList.tsx
-import CompanyCard from "./CompanyCard";
+import CompanyCard from "./CompanyCard"
+
+const companies = [
+  {
+    name: "Nexus Engenharia",
+    category: "Engenharia Estrutural",
+    city: "Rio de Janeiro",
+    state: "RJ",
+    phone: "(21) 97781-4334",
+    imageUrl: "/empresa-nexus.jpg",
+  },
+  {
+    name: "Clínica Bem Estar",
+    category: "Saúde",
+    city: "São Paulo",
+    state: "SP",
+    phone: "(11) 98888-1111",
+    imageUrl: "/clinica-bemestar.jpg",
+  },
+  {
+    name: "Contábil Alfa",
+    category: "Contabilidade",
+    city: "Belo Horizonte",
+    state: "MG",
+    phone: "(31) 92222-3333",
+    imageUrl: "/contabil-alfa.jpg",
+  },
+]
 
 export default function BusinessList() {
-  const businesses = [
-    {
-      name: "Construtora RJ",
-      description: "Projetos e reformas em toda a cidade.",
-      image: "/empresas/empresa1.jpg",
-      rating: 4.8,
-      contactLink: "https://wa.me/5521999999999",
-    },
-    {
-      name: "Contabilidade Prime",
-      description: "Assessoria fiscal e tributária especializada.",
-      image: "/empresas/empresa2.jpg",
-      rating: 4.6,
-      contactLink: "mailto:contato@prime.com",
-    },
-  ];
-
   return (
-    <section className="grid gap-6 p-4 sm:grid-cols-2 lg:grid-cols-3">
-      {businesses.map((b, index) => (
-        <CompanyCard key={index} {...b} />
-      ))}
+    <section className="py-8 px-4 md:px-8 bg-gray-100">
+      <h2 className="text-2xl font-bold mb-6 text-center">Empresas em destaque</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 justify-items-center">
+        {companies.map((company, index) => (
+          <CompanyCard key={index} {...company} />
+        ))}
+      </div>
     </section>
-  );
+  )
 }
