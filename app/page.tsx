@@ -1,3 +1,3 @@
-export default function Page() {
-  return <h1>Hello Vercel</h1>;
+export default function HomePage() {
+  return <h1>Bem-vindo ao Ache Negócio!</h1>;
 }
