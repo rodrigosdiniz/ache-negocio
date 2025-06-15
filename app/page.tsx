@@ -1,6 +1,7 @@
 import Hero from './components/Hero'
 import Features from './components/Features'
 import SearchSection from './components/SearchSection'
+import CallToAction from './components/CallToAction'
 
 export default function Home() {
   return (
@@ -8,7 +9,7 @@ export default function Home() {
       <Hero />
       <Features />
       <SearchSection />
+      <CallToAction />
     </main>
   );
 }
-
