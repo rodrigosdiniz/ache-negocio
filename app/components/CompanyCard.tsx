@@ -1,70 +1,41 @@
-// app/components/CompanyCard.tsx
-import React from 'react';
+'use client'
+
+import Image from 'next/image'
+import { Star } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 interface CompanyCardProps {
-  name: string;
-  description: string;
-  category: string;
-  whatsapp: string;
-  address: string;
-  imageUrl?: string;
-  rating?: number;
+  name: string
+  description: string
+  imageUrl: string
+  whatsapp: string
+  rating: number // de 0 a 5
 }
 
-export default function CompanyCard({
-  name,
-  description,
-  category,
-  whatsapp,
-  address,
-  imageUrl = 'https://via.placeholder.com/100x100.png?text=Empresa',
-  rating = 4.5,
-}: CompanyCardProps) {
+export default function CompanyCard({ name, description, imageUrl, whatsapp, rating }: CompanyCardProps) {
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: '1rem',
-      padding: '1rem',
-      backgroundColor: '#fff',
-      borderRadius: '10px',
-      boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
-      maxWidth: '600px',
-      margin: '1rem auto'
-    }}>
-      <img
+    <div className="bg-white shadow-md rounded-2xl overflow-hidden max-w-sm border hover:shadow-lg transition">
+      <Image
         src={imageUrl}
-        alt={name}
-        style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px' }}
+        alt={`Logo de ${name}`}
+        width={400}
+        height={250}
+        className="w-full h-48 object-cover"
       />
-      <div style={{ flex: 1 }}>
-        <h3 style={{ margin: '0 0 0.25rem' }}>{name}</h3>
-        <p style={{ margin: '0', fontSize: '0.9rem', color: '#555' }}>{description}</p>
-        <p style={{ margin: '0.25rem 0', fontSize: '0.8rem', color: '#888' }}>
-          <strong>Categoria:</strong> {category} <br />
-          <strong>Endereço:</strong> {address}
-        </p>
-        <p style={{ margin: '0.25rem 0', fontSize: '0.8rem', color: '#f39c12' }}>
-          {'★'.repeat(Math.round(rating))} <span style={{ color: '#333' }}>({rating.toFixed(1)})</span>
-        </p>
-        <a
-          href={`https://wa.me/${whatsapp.replace(/\D/g, '')}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            display: 'inline-block',
-            marginTop: '0.5rem',
-            padding: '0.5rem 1rem',
-            backgroundColor: '#25D366',
-            color: 'white',
-            borderRadius: '5px',
-            fontWeight: 'bold',
-            textDecoration: 'none'
-          }}
-        >
-          Fale por WhatsApp
-        </a>
+      <div className="p-4">
+        <h3 className="text-xl font-semibold">{name}</h3>
+        <p className="text-sm text-gray-600 mb-2">{description}</p>
+        <div className="flex items-center gap-1 text-yellow-500 mb-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Star key={i} size={18} fill={i < rating ? 'currentColor' : 'none'} />
+          ))}
+        </div>
+        <Button asChild className="w-full">
+          <a href={`https://wa.me/${whatsapp}`} target="_blank" rel="noopener noreferrer">
+            Entrar em contato
+          </a>
+        </Button>
       </div>
     </div>
-  );
+  )
 }
