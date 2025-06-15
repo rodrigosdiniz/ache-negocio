@@ -1,14 +1,13 @@
-// app/login/page.tsx
-export default function LoginPage() {
+export default function Login() {
   return (
-    <div>
+    <main>
       <h1>Login</h1>
       <form>
-        <input type="email" placeholder="Seu e-mail" />
-        <input type="password" placeholder="Sua senha" />
+        <input type="email" placeholder="E-mail" required /><br />
+        <input type="password" placeholder="Senha" required /><br />
         <button type="submit">Entrar</button>
       </form>
-    </div>
+    </main>
   );
 }
 
