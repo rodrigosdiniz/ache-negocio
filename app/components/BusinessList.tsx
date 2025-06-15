@@ -1,50 +1,44 @@
-type Business = {
-  nome: string;
-  categoria: string;
-  cidade: string;
-  telefone: string;
-  destaque?: boolean;
-};
+// app/components/BusinessList.tsx
+import CompanyCard from './CompanyCard';
 
-const empresas: Business[] = [
+const dummyBusinesses = [
   {
-    nome: 'Nexus Engenharia',
-    categoria: 'Engenharia Estrutural',
-    cidade: 'Rio de Janeiro - RJ',
-    telefone: '(21) 97781-4334',
-    destaque: true,
+    name: 'Engenharia Total',
+    category: 'Engenheiros',
+    description: 'Especializados em projetos estruturais e laudos técnicos.',
+    whatsapp: '21999999999',
+    address: 'Rua A, 123 - Centro, RJ'
   },
   {
-    nome: 'Clínica Bem Estar',
-    categoria: 'Saúde',
-    cidade: 'São Paulo - SP',
-    telefone: '(11) 98888-1111',
+    name: 'Eletricista Rápido',
+    category: 'Eletricistas',
+    description: 'Serviços elétricos residenciais e comerciais com segurança.',
+    whatsapp: '21988888888',
+    address: 'Rua B, 456 - Tijuca, RJ'
   },
   {
-    nome: 'Contábil Alfa',
-    categoria: 'Contabilidade',
-    cidade: 'Belo Horizonte - MG',
-    telefone: '(31) 92222-3333',
-  },
+    name: 'Contabilidade Silva',
+    category: 'Contadores',
+    description: 'Impostos, declarações e gestão financeira.',
+    whatsapp: '21977777777',
+    address: 'Av. das Américas, 8900 - Barra, RJ'
+  }
 ];
 
 export default function BusinessList() {
   return (
-    <section style={{ padding: '2rem 1rem', maxWidth: '960px', margin: '0 auto' }}>
-      <h2 style={{ fontSize: '1.8rem', marginBottom: '1.5rem' }}>Empresas em destaque</h2>
-      {empresas.map((empresa, index) => (
-        <div key={index} style={{
-          border: empresa.destaque ? '2px solid #0070f3' : '1px solid #ccc',
-          borderRadius: '8px',
-          padding: '1rem',
-          marginBottom: '1rem',
-          backgroundColor: empresa.destaque ? '#f0f8ff' : '#fff'
-        }}>
-          <h3 style={{ margin: '0 0 0.5rem' }}>{empresa.nome}</h3>
-          <p style={{ margin: 0 }}>{empresa.categoria} – {empresa.cidade}</p>
-          <p style={{ margin: '0.3rem 0' }}>📞 {empresa.telefone}</p>
-        </div>
-      ))}
+    <section style={{ padding: '2rem', background: '#fff' }}>
+      <h2 style={{ textAlign: 'center', marginBottom: '2rem' }}>Empresas em destaque</h2>
+      <div style={{
+        display: 'grid',
+        gap: '1.5rem',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+        justifyContent: 'center'
+      }}>
+        {dummyBusinesses.map((business, index) => (
+          <CompanyCard key={index} business={business} />
+        ))}
+      </div>
     </section>
   );
 }
