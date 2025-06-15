@@ -2,6 +2,7 @@ import Hero from './components/Hero'
 import Features from './components/Features'
 import SearchSection from './components/SearchSection'
 import CallToAction from './components/CallToAction'
+import BusinessList from './components/BusinessList'
 
 export default function Home() {
   return (
@@ -10,6 +11,8 @@ export default function Home() {
       <Features />
       <SearchSection />
       <CallToAction />
+      <BusinessList />
     </main>
   );
 }
+
