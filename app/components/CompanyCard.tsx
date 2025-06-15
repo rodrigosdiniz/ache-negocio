@@ -1,35 +1,48 @@
 // components/CompanyCard.tsx
-import { Card, CardContent } from "@/components/ui/card";
+"use client"
+
+import { Card, CardContent } from "@/components/ui/card"
+import Image from "next/image"
 
 interface CompanyCardProps {
-  name: string;
-  description: string;
-  image: string;
-  rating: number;
-  contactLink: string;
+  name: string
+  category: string
+  city: string
+  state: string
+  phone: string
+  imageUrl?: string
 }
 
 export default function CompanyCard({
   name,
-  description,
-  image,
-  rating,
-  contactLink,
+  category,
+  city,
+  state,
+  phone,
+  imageUrl = "/default-company.jpg",
 }: CompanyCardProps) {
   return (
-    <Card className="w-full max-w-md mx-auto shadow-md border rounded-2xl overflow-hidden">
-      <img src={image} alt={name} className="w-full h-48 object-cover" />
+    <Card className="w-full max-w-sm shadow-xl hover:scale-105 transition-transform">
+      <Image
+        src={imageUrl}
+        alt={name}
+        width={400}
+        height={250}
+        className="rounded-t-xl object-cover h-48 w-full"
+      />
       <CardContent className="p-4">
-        <h3 className="text-xl font-bold mb-1">{name}</h3>
-        <p className="text-gray-600 mb-2">{description}</p>
-        <p className="text-yellow-500 text-sm mb-4">⭐ {rating.toFixed(1)} / 5.0</p>
+        <h3 className="text-lg font-bold">{name}</h3>
+        <p className="text-sm text-muted-foreground">{category} – {city} - {state}</p>
+        <p className="mt-2 text-sm">📞 {phone}</p>
         <a
-          href={contactLink}
-          className="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+          href={`https://wa.me/55${phone.replace(/\D/g, "")}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-block mt-4 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
         >
           Entrar em contato
         </a>
       </CardContent>
     </Card>
-  );
+  )
 }
