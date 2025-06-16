@@ -1,48 +1,54 @@
-// components/CompanyCard.tsx
-"use client"
+'use client';
 
-import { Card, CardContent } from "@/components/ui/card"
-import Image from "next/image"
+import { Card, CardContent } from '@/components/ui/card';
+import { PhoneIcon, StarIcon } from 'lucide-react';
+import Image from 'next/image';
 
-interface CompanyCardProps {
-  name: string
-  category: string
-  city: string
-  state: string
-  phone: string
-  imageUrl?: string
+interface CompanyProps {
+  name: string;
+  category: string;
+  location: string;
+  phone: string;
+  imageUrl?: string;
+  rating?: number;
 }
 
 export default function CompanyCard({
   name,
   category,
-  city,
-  state,
+  location,
   phone,
-  imageUrl = "/default-company.jpg",
-}: CompanyCardProps) {
+  imageUrl = '/placeholder.jpg',
+  rating = 4,
+}: CompanyProps) {
   return (
-    <Card className="w-full max-w-sm shadow-xl hover:scale-105 transition-transform">
+    <Card className="w-full max-w-xl mx-auto hover:shadow-lg transition-shadow mb-4">
       <Image
         src={imageUrl}
         alt={name}
-        width={400}
-        height={250}
-        className="rounded-t-xl object-cover h-48 w-full"
+        width={600}
+        height={300}
+        className="rounded-t-md object-cover h-48 w-full"
       />
       <CardContent className="p-4">
-        <h3 className="text-lg font-bold">{name}</h3>
-        <p className="text-sm text-muted-foreground">{category} – {city} - {state}</p>
-        <p className="mt-2 text-sm">📞 {phone}</p>
-        <a
-          href={`https://wa.me/55${phone.replace(/\D/g, "")}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-block mt-4 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
-        >
-          Entrar em contato
-        </a>
+        <h3 className="text-xl font-bold">{name}</h3>
+        <p className="text-sm text-muted-foreground">{category} – {location}</p>
+        <div className="flex items-center text-sm my-2">
+          <PhoneIcon className="w-4 h-4 mr-2 text-green-500" />
+          <a href={`https://wa.me/55${phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer">
+            {phone}
+          </a>
+        </div>
+        <div className="flex items-center gap-1 text-yellow-500">
+          {[...Array(5)].map((_, i) => (
+            <StarIcon
+              key={i}
+              className={`w-4 h-4 ${i < rating ? 'fill-yellow-500' : 'text-gray-300'}`}
+              fill={i < rating ? '#facc15' : 'none'}
+            />
+          ))}
+        </div>
       </CardContent>
     </Card>
-  )
+  );
 }
