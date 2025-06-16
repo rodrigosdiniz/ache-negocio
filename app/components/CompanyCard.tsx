@@ -1,6 +1,6 @@
 'use client';
 
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/Card';
 import { PhoneIcon, StarIcon } from 'lucide-react';
 import Image from 'next/image';
 
