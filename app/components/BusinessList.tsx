@@ -1,41 +1,43 @@
-import CompanyCard from "./CompanyCard"
+'use client';
 
-const companies = [
+import CompanyCard from './CompanyCard';
+
+const businesses = [
   {
-    name: "Nexus Engenharia",
-    category: "Engenharia Estrutural",
-    city: "Rio de Janeiro",
-    state: "RJ",
-    phone: "(21) 97781-4334",
-    imageUrl: "/empresa-nexus.jpg",
+    name: 'Nexus Engenharia',
+    category: 'Engenharia Estrutural',
+    location: 'Rio de Janeiro - RJ',
+    phone: '(21) 97781-4334',
+    imageUrl: '/img/nexus.jpg',
+    rating: 5,
   },
   {
-    name: "Clínica Bem Estar",
-    category: "Saúde",
-    city: "São Paulo",
-    state: "SP",
-    phone: "(11) 98888-1111",
-    imageUrl: "/clinica-bemestar.jpg",
+    name: 'Clínica Bem Estar',
+    category: 'Saúde',
+    location: 'São Paulo - SP',
+    phone: '(11) 98888-1111',
+    imageUrl: '/img/clinica.jpg',
+    rating: 4,
   },
   {
-    name: "Contábil Alfa",
-    category: "Contabilidade",
-    city: "Belo Horizonte",
-    state: "MG",
-    phone: "(31) 92222-3333",
-    imageUrl: "/contabil-alfa.jpg",
+    name: 'Contábil Alfa',
+    category: 'Contabilidade',
+    location: 'Belo Horizonte - MG',
+    phone: '(31) 92222-3333',
+    imageUrl: '/img/contabil.jpg',
+    rating: 3,
   },
-]
+];
 
 export default function BusinessList() {
   return (
-    <section className="py-8 px-4 md:px-8 bg-gray-100">
-      <h2 className="text-2xl font-bold mb-6 text-center">Empresas em destaque</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 justify-items-center">
-        {companies.map((company, index) => (
-          <CompanyCard key={index} {...company} />
+    <section className="p-4">
+      <h2 className="text-2xl font-bold text-center mb-6">Empresas em destaque</h2>
+      <div className="grid gap-6 justify-center">
+        {businesses.map((biz, index) => (
+          <CompanyCard key={index} {...biz} />
         ))}
       </div>
     </section>
-  )
+  );
 }
