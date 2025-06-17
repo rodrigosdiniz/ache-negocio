@@ -1,7 +1,7 @@
 'use client'
 
-import { useSearchParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { Suspense } from 'react';
+import ResultadosComponent from './ResultadosComponent';
 
 type Empresa = {
   id: number
