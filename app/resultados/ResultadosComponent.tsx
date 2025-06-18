@@ -20,19 +20,24 @@ export default function ResultadosComponent() {
 
   useEffect(() => {
     const fetchEmpresas = async () => {
+      setLoading(true)
+
       if (query.trim()) {
         const { data, error } = await supabase
           .from('empresas')
           .select('*')
-          .ilike('nome', `%${query}%`)
+          .or(`nome.ilike.%${query}%,categoria.ilike.%${query}%,cidade.ilike.%${query}%`)
 
         if (error) {
           console.error('Erro ao buscar empresas:', error.message)
         } else {
           setEmpresas(data || [])
         }
-        setLoading(false)
+      } else {
+        setEmpresas([])
       }
+
+      setLoading(false)
     }
 
     fetchEmpresas()
