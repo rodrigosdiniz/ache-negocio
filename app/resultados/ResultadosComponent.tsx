@@ -21,23 +21,15 @@ export default function ResultadosComponent() {
   useEffect(() => {
     const fetchEmpresas = async () => {
       if (query.trim()) {
-        const { data, error } = await supabase
-          .from('empresas')
-          .select('*')
-          .or(`
-            unaccent(nome).ilike.unaccent.%${query}%,
-            unaccent(cidade).ilike.unaccent.%${query}%,
-            unaccent(categoria).ilike.unaccent.%${query}%
-          `)
+        const { data, error } = await supabase.rpc('buscar_empresas', {
+          termo: query
+        })
 
         if (error) {
           console.error('Erro ao buscar empresas:', error.message)
         } else {
           setEmpresas(data || [])
         }
-        setLoading(false)
-      } else {
-        setEmpresas([])
         setLoading(false)
       }
     }
