@@ -19,23 +19,24 @@ export default function ResultadosComponent() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const fetchEmpresas = async () => {
-      if (query.trim()) {
-        const { data, error } = await supabase.rpc('buscar_empresas', {
-          termo: query
-        })
+  const fetchEmpresas = async () => {
+    if (query.trim()) {
+      const { data, error } = await supabase.rpc('buscar_empresas', {
+        termo: query
+      });
 
-        if (error) {
-          console.error('Erro ao buscar empresas:', error.message)
-        } else {
-          setEmpresas(data || [])
-        }
-        setLoading(false)
+      if (error) {
+        console.error('Erro ao buscar empresas:', error.message);
+      } else {
+        setEmpresas(data || []);
       }
-    }
 
-    fetchEmpresas()
-  }, [query])
+      setLoading(false);
+    }
+  };
+
+  fetchEmpresas();
+}, [query]);
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-10">
