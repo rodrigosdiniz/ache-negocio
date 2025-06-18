@@ -2,6 +2,7 @@
 
 import { useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabaseClient'
 
 type Empresa = {
   id: number
@@ -15,38 +16,35 @@ export default function ResultadosComponent() {
   const searchParams = useSearchParams()
   const query = searchParams.get('q') || ''
   const [empresas, setEmpresas] = useState<Empresa[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (query.trim()) {
-      const resultadosFake: Empresa[] = [
-        {
-          id: 1,
-          nome: 'Mega Engenharia',
-          categoria: 'Engenharia Civil',
-          cidade: 'Rio de Janeiro',
-          descricao: 'Projetos e obras com excelência.',
-        },
-        {
-          id: 2,
-          nome: 'Mega Solar',
-          categoria: 'Energia Solar',
-          cidade: 'Niterói',
-          descricao: 'Soluções completas em energia renovável.',
-        },
-      ]
+    const fetchEmpresas = async () => {
+      if (query.trim()) {
+        const { data, error } = await supabase
+          .from('empresas')
+          .select('*')
+          .ilike('nome', `%${query}%`)
 
-      const filtrados = resultadosFake.filter((empresa) =>
-        empresa.nome.toLowerCase().includes(query.toLowerCase())
-      )
-      setEmpresas(filtrados)
+        if (error) {
+          console.error('Erro ao buscar empresas:', error.message)
+        } else {
+          setEmpresas(data || [])
+        }
+        setLoading(false)
+      }
     }
+
+    fetchEmpresas()
   }, [query])
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-10">
       <h1 className="text-3xl font-bold mb-6">Resultados para: "{query}"</h1>
 
-      {empresas.length === 0 ? (
+      {loading ? (
+        <p className="text-gray-600">Carregando...</p>
+      ) : empresas.length === 0 ? (
         <p className="text-gray-600">Nenhuma empresa encontrada.</p>
       ) : (
         <ul className="space-y-4">
