@@ -5,21 +5,15 @@ import { useState } from 'react'
 const planos = [
   {
     nome: 'Plano Básico',
-    preco: 'R$ 29/mês',
-    priceId: 'price_1PQ9D2Jq5K2oSeuExemplo1', // Substitua pelo seu ID real
+    preco: 'R$ 8,00/mês',
+    priceId: 'prod_STY3xLNwPsAtLj',
     descricao: 'Ideal para pequenos negócios que estão começando.'
   },
   {
     nome: 'Plano Profissional',
-    preco: 'R$ 59/mês',
-    priceId: 'price_1PQ9D2Jq5K2oSeuExemplo2',
+    preco: 'R$ 12,00/mês',
+    priceId: 'prod_STY3R3v6pVxAxS',
     descricao: 'Recomendado para empresas com presença consolidada.'
-  },
-  {
-    nome: 'Plano Premium',
-    preco: 'R$ 99/mês',
-    priceId: 'price_1PQ9D2Jq5K2oSeuExemplo3',
-    descricao: 'Para empresas que querem total destaque e recursos avançados.'
   }
 ]
 
@@ -52,7 +46,7 @@ export default function PaginaPrecos() {
     <main className="max-w-5xl mx-auto px-4 py-10">
       <h1 className="text-4xl font-bold text-center mb-10">Escolha seu plano</h1>
 
-      <div className="grid md:grid-cols-3 gap-6">
+      <div className="grid md:grid-cols-2 gap-6">
         {planos.map((plano) => (
           <div key={plano.priceId} className="border rounded-xl p-6 shadow-md bg-white flex flex-col justify-between">
             <div>
