@@ -5,14 +5,14 @@ import { useState } from 'react'
 const planos = [
   {
     nome: 'Plano Básico',
-    preco: 'R$ 8,00/mês',
-    priceId: 'prod_STY3xLNwPsAtLj',
+    preco: '$8,00/mês',
+    priceId: 'price_1RYaxMDGX3huEh4zJhiwZNSH',
     descricao: 'Ideal para pequenos negócios que estão começando.'
   },
   {
     nome: 'Plano Profissional',
-    preco: 'R$ 12,00/mês',
-    priceId: 'prod_STY3R3v6pVxAxS',
+    preco: '$12,00/mês',
+    priceId: 'price_1RYaxNDGX3huEh4zt1pNbM9k',
     descricao: 'Recomendado para empresas com presença consolidada.'
   }
 ]
