@@ -1,53 +1,74 @@
 // app/empresa/[id]/page.tsx
-'use client'
-
-import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { MapPin, Phone, Mail, Globe, Building2 } from 'lucide-react'
+import Image from 'next/image'
+import Link from 'next/link'
+import { notFound } from 'next/navigation'
+import { Metadata } from 'next'
 
-export default function EmpresaDetalhesPage() {
-  const { id } = useParams()
-  const router = useRouter()
-  const [empresa, setEmpresa] = useState<any>(null)
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const { data } = await supabase.from('empresas').select('nome, cidade').eq('id', params.id).single()
+  return {
+    title: `${data?.nome} em ${data?.cidade} | Ache Negócio`,
+    description: `Encontre ${data?.nome}, localizada em ${data?.cidade}. Veja informações, contato e mais.`
+  }
+}
 
-  useEffect(() => {
-    const buscarEmpresa = async () => {
-      const { data, error } = await supabase.from('empresas').select('*').eq('id', id).single()
-      if (!error) setEmpresa(data)
-    }
-    if (id) buscarEmpresa()
-  }, [id])
+export default async function EmpresaPage({ params }: { params: { id: string } }) {
+  const { data: empresa } = await supabase.from('empresas').select('*').eq('id', params.id).single()
+  if (!empresa) return notFound()
 
-  if (!empresa) return <p className="text-center py-10">Carregando...</p>
+  const { data: avaliacoes } = await supabase.from('avaliacoes')
+    .select('nota, comentario, created_at')
+    .eq('empresa_id', params.id)
+    .order('created_at', { ascending: false })
+
+  const media = avaliacoes && avaliacoes.length > 0
+    ? (avaliacoes.reduce((acc, cur) => acc + cur.nota, 0) / avaliacoes.length).toFixed(1)
+    : null
+
+  const whatsappLink = empresa.telefone?.replace(/[^0-9]/g, '').length >= 11
+    ? `https://wa.me/55${empresa.telefone.replace(/[^0-9]/g, '')}`
+    : null
 
   return (
     <main className="max-w-3xl mx-auto px-4 py-10">
-      <h1 className="text-4xl font-bold mb-2">{empresa.nome}</h1>
-      <span className="inline-block text-sm bg-blue-100 text-blue-800 px-3 py-1 rounded mb-6">{empresa.categoria}</span>
+      <Link href="/empresas" className="text-blue-600 underline mb-4 inline-block">← Voltar</Link>
 
-      <div className="space-y-2 text-gray-700 mb-6">
-        <p className="flex items-center gap-2"><MapPin size={18} /> {empresa.cidade}</p>
-        <p className="flex items-center gap-2"><Phone size={18} /> {empresa.telefone}</p>
-        <p className="flex items-center gap-2"><Mail size={18} /> {empresa.email}</p>
+      {empresa.imagem_url && (
+        <Image src={empresa.imagem_url} alt={empresa.nome} width={600} height={300} className="rounded-xl mb-6 w-full object-cover" />
+      )}
+
+      <h1 className="text-3xl font-bold mb-2">{empresa.nome}</h1>
+      <p className="text-sm text-gray-600 mb-4">{empresa.categoria} • {empresa.cidade}</p>
+
+      <p className="mb-4">{empresa.descricao}</p>
+
+      <div className="mb-4 space-y-1">
+        <p><strong>Telefone:</strong> {empresa.telefone}</p>
+        <p><strong>Email:</strong> {empresa.email}</p>
         {empresa.website && (
-          <p className="flex items-center gap-2">
-            <Globe size={18} /> <a href={empresa.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{empresa.website}</a>
-          </p>
+          <p><strong>Site:</strong> <a href={empresa.website} target="_blank" className="text-blue-600 underline">{empresa.website}</a></p>
+        )}
+        {whatsappLink && (
+          <a href={whatsappLink} target="_blank" className="inline-block mt-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Entrar no WhatsApp</a>
         )}
       </div>
 
-      <div className="bg-white p-6 rounded shadow">
-        <h2 className="text-xl font-semibold mb-2">Descrição</h2>
-        <p>{empresa.descricao}</p>
-      </div>
-
-      <button
-        onClick={() => router.back()}
-        className="mt-6 inline-block bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded"
-      >
-        Voltar
-      </button>
+      {media && (
+        <div className="mt-6">
+          <h2 className="text-xl font-semibold mb-2">Avaliações ({avaliacoes!.length})</h2>
+          <p className="mb-2">Nota média: ⭐ {media}</p>
+          <ul className="space-y-2">
+            {avaliacoes!.map((a, i) => (
+              <li key={i} className="border p-4 rounded">
+                <p>⭐ {a.nota}</p>
+                <p>{a.comentario}</p>
+                <p className="text-sm text-gray-500">{new Date(a.created_at).toLocaleDateString()}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </main>
   )
 }
