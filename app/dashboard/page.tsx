@@ -1,34 +1,24 @@
-'use client'
+// app/dashboard/page.tsx
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { cookies } from 'next/headers'
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
+import { redirect } from 'next/navigation'
 
-export default function DashboardPage() {
-  const [usuario, setUsuario] = useState<any>(null)
-  const [carregando, setCarregando] = useState(true)
-  const router = useRouter()
+export default async function DashboardPage() {
+  const supabase = createServerComponentClient({ cookies })
+  const {
+    data: { user },
+    error
+  } = await supabase.auth.getUser()
 
-  useEffect(() => {
-    const carregar = async () => {
-      const { data, error } = await supabase.auth.getUser()
-      if (error || !data.user) {
-        router.push('/login')
-      } else {
-        setUsuario(data.user)
-      }
-      setCarregando(false)
-    }
-    carregar()
-  }, [router])
-
-  if (carregando) return <p>Carregando...</p>
+  if (!user || error) {
+    return redirect('/login')
+  }
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Meus Dados</h1>
-      <p><strong>Nome:</strong> {usuario?.user_metadata?.nome || '—'}</p>
-      <p><strong>Email:</strong> {usuario?.email}</p>
-    </div>
+    <main className="max-w-3xl mx-auto py-10 px-4">
+      <h1 className="text-3xl font-bold mb-4">Olá, {user.email}</h1>
+      <p className="text-gray-700">Você está logado com sucesso.</p>
+    </main>
   )
 }
