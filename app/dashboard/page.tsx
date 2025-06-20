@@ -8,6 +8,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 export default function PerfilPage() {
   const [user, setUser] = useState<any>(null)
   const [nome, setNome] = useState('')
+  const [senha, setSenha] = useState('')
   const [loading, setLoading] = useState(true)
   const [salvo, setSalvo] = useState(false)
   const router = useRouter()
@@ -30,7 +31,16 @@ export default function PerfilPage() {
   const salvar = async (e: React.FormEvent) => {
     e.preventDefault()
     setSalvo(false)
-    await supabase.auth.updateUser({ data: { nome } })
+
+    if (nome) {
+      await supabase.auth.updateUser({ data: { nome } })
+    }
+
+    if (senha) {
+      await supabase.auth.updateUser({ password: senha })
+      setSenha('')
+    }
+
     setSalvo(true)
   }
 
@@ -57,6 +67,17 @@ export default function PerfilPage() {
           />
         </div>
 
+        <div className="mb-4">
+          <label className="block text-gray-700 font-medium mb-1">Nova senha (opcional):</label>
+          <input
+            type="password"
+            value={senha}
+            onChange={(e) => setSenha(e.target.value)}
+            className="w-full border border-gray-300 rounded px-3 py-2"
+            placeholder="Digite uma nova senha"
+          />
+        </div>
+
         <button
           type="submit"
           className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded"
@@ -64,7 +85,7 @@ export default function PerfilPage() {
           Salvar alterações
         </button>
 
-        {salvo && <p className="text-green-600 mt-3">Nome atualizado com sucesso.</p>}
+        {salvo && <p className="text-green-600 mt-3">Dados atualizados com sucesso.</p>}
       </form>
     </main>
   )
