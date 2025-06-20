@@ -4,15 +4,14 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { motion, AnimatePresence } from 'framer-motion'
-import Toast from '@/components/Toast'
+import { motion } from 'framer-motion'
+import { useToast } from '@/context/toast-context'
 
 export default function PerfilPage() {
   const [usuario, setUsuario] = useState<any>(null)
   const [nome, setNome] = useState('')
-  const [mensagem, setMensagem] = useState('')
-  const [tipo, setTipo] = useState<'success' | 'error'>('success')
   const router = useRouter()
+  const { showToast } = useToast()
 
   useEffect(() => {
     const carregar = async () => {
@@ -32,13 +31,10 @@ export default function PerfilPage() {
       data: { nome }
     })
     if (error) {
-      setMensagem('Erro ao salvar')
-      setTipo('error')
+      showToast('Erro ao salvar', 'error')
     } else {
-      setMensagem('Salvo com sucesso')
-      setTipo('success')
+      showToast('Salvo com sucesso', 'success')
     }
-    setTimeout(() => setMensagem(''), 3000)
   }
 
   return (
@@ -76,9 +72,6 @@ export default function PerfilPage() {
           Salvar
         </motion.button>
       </div>
-      {mensagem && (
-        <Toast message={mensagem} type={tipo} onClose={() => setMensagem('')} />
-      )}
     </motion.div>
   )
 }
