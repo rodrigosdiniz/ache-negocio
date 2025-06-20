@@ -7,7 +7,7 @@ import { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { Toast } from '@/components/ui/toast'
-import { Star } from 'lucide-react'
+import { Star, Award } from 'lucide-react'
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const { data } = await supabase.from('empresas').select('nome, cidade').eq('id', params.id).single()
@@ -71,7 +71,14 @@ export default async function EmpresaPage({ params, searchParams }: { params: { 
         <Image src={empresa.imagem_url} alt={empresa.nome} width={600} height={300} className="rounded-xl mb-6 w-full object-cover" />
       )}
 
-      <h1 className="text-3xl font-bold mb-2">{empresa.nome}</h1>
+      <h1 className="text-3xl font-bold mb-1 flex items-center gap-2">
+        {empresa.nome}
+        {media && Number(media) >= 4.5 && (
+          <span className="inline-flex items-center gap-1 bg-yellow-100 text-yellow-800 text-sm px-2 py-0.5 rounded">
+            <Award className="w-4 h-4" /> Top Avaliada
+          </span>
+        )}
+      </h1>
       <p className="text-sm text-gray-600 mb-2">{empresa.categoria} • {empresa.cidade}</p>
 
       {media && (
