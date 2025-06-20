@@ -1,77 +1,104 @@
-// app/dashboard/perfil/page.tsx
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { motion } from 'framer-motion'
-import { useToast } from '@/context/toast-context'
+import Link from 'next/link'
+import { Star } from 'lucide-react'
 
-export default function PerfilPage() {
-  const [usuario, setUsuario] = useState<any>(null)
-  const [nome, setNome] = useState('')
-  const router = useRouter()
-  const { showToast } = useToast()
+interface Empresa {
+  id: string
+  nome: string
+  cidade: string
+  categoria: string
+  nota_media: number
+}
+
+interface Avaliacao {
+  id: string
+  nota: number
+  comentario: string
+  created_at: string
+  empresa: {
+    id: string
+    nome: string
+  }
+}
+
+export default function DashboardPerfil() {
+  const [empresas, setEmpresas] = useState<Empresa[]>([])
+  const [avaliacoes, setAvaliacoes] = useState<Avaliacao[]>([])
+  const [userId, setUserId] = useState<string>('')
 
   useEffect(() => {
     const carregar = async () => {
-      const { data, error } = await supabase.auth.getUser()
-      if (error || !data.user) {
-        router.push('/login')
-      } else {
-        setUsuario(data.user)
-        setNome(data.user.user_metadata?.nome || '')
-      }
-    }
-    carregar()
-  }, [router])
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      setUserId(user.id)
 
-  const salvar = async () => {
-    const { error } = await supabase.auth.updateUser({
-      data: { nome }
-    })
-    if (error) {
-      showToast('Erro ao salvar', 'error')
-    } else {
-      showToast('Salvo com sucesso', 'success')
+      const { data: empresas } = await supabase
+        .from('empresas')
+        .select('id, nome, cidade, categoria, nota_media')
+        .eq('user_id', user.id)
+
+      const { data: avaliacoes } = await supabase
+        .from('avaliacoes')
+        .select('id, nota, comentario, created_at, empresa(id, nome)')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+
+      if (empresas) setEmpresas(empresas)
+      if (avaliacoes) setAvaliacoes(avaliacoes)
     }
-  }
+
+    carregar()
+  }, [])
 
   return (
-    <motion.div
-      className="max-w-xl mx-auto px-4 py-10"
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-    >
-      <h1 className="text-3xl font-bold mb-6">Perfil</h1>
-      <div className="space-y-4 bg-white p-6 rounded shadow">
-        <div>
-          <label className="block font-medium mb-1">Nome</label>
-          <input
-            type="text"
-            value={nome}
-            onChange={(e) => setNome(e.target.value)}
-            className="w-full border rounded px-3 py-2"
-          />
-        </div>
-        <div>
-          <label className="block font-medium mb-1">Email</label>
-          <input
-            type="email"
-            value={usuario?.email || ''}
-            disabled
-            className="w-full border rounded px-3 py-2 bg-gray-100 text-gray-600"
-          />
-        </div>
-        <motion.button
-          onClick={salvar}
-          whileTap={{ scale: 0.95 }}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded"
-        >
-          Salvar
-        </motion.button>
-      </div>
-    </motion.div>
+    <main className="max-w-4xl mx-auto px-4 py-10">
+      <h1 className="text-3xl font-bold mb-8">Meu Perfil</h1>
+
+      <section className="mb-10">
+        <h2 className="text-xl font-semibold mb-4">Minhas Empresas</h2>
+        {empresas.length === 0 ? (
+          <p className="text-sm text-gray-600">Nenhuma empresa cadastrada ainda.</p>
+        ) : (
+          <ul className="space-y-3">
+            {empresas.map((empresa) => (
+              <li key={empresa.id} className="border p-4 rounded">
+                <Link href={`/empresa/${empresa.id}`} className="text-blue-600 font-semibold hover:underline">
+                  {empresa.nome}
+                </Link>
+                <p className="text-sm text-gray-600">{empresa.cidade} • {empresa.categoria}</p>
+                {empresa.nota_media && (
+                  <p className="flex items-center gap-1 text-sm text-yellow-600">
+                    <Star className="w-4 h-4 fill-yellow-500" /> {empresa.nota_media.toFixed(1)} / 5
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section>
+        <h2 className="text-xl font-semibold mb-4">Minhas Avaliações</h2>
+        {avaliacoes.length === 0 ? (
+          <p className="text-sm text-gray-600">Você ainda não avaliou nenhuma empresa.</p>
+        ) : (
+          <ul className="space-y-3">
+            {avaliacoes.map((a) => (
+              <li key={a.id} className="border p-4 rounded">
+                <Link href={`/empresa/${a.empresa.id}`} className="text-blue-600 font-semibold hover:underline">
+                  {a.empresa.nome}
+                </Link>
+                <p className="text-sm">Nota: {a.nota}</p>
+                <p className="text-sm italic">"{a.comentario}"</p>
+                <p className="text-xs text-gray-500">{new Date(a.created_at).toLocaleDateString()}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </main>
   )
 }
