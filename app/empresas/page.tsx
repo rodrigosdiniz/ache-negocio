@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { Building, MapPin, Phone, Star } from 'lucide-react'
+import { MapPin, Phone, Star } from 'lucide-react'
 
 interface Empresa {
   id: string
@@ -25,24 +25,49 @@ export default function ListaEmpresasPage() {
   const [categoria, setCategoria] = useState(searchParams.get('categoria') || '')
   const [notaMin, setNotaMin] = useState(Number(searchParams.get('nota')) || 0)
 
+  const [pagina, setPagina] = useState(0)
+  const [carregando, setCarregando] = useState(false)
+  const [temMais, setTemMais] = useState(true)
+
+  const limitePorPagina = 9
+
+  // Resetar listagem ao mudar filtros
   useEffect(() => {
-    const carregarEmpresas = async () => {
-      let query = supabase.from('empresas').select('*')
+    setPagina(0)
+    setEmpresas([])
+    setTemMais(true)
+  }, [busca, cidade, categoria, notaMin])
 
-      const filtros = []
-      if (busca) filtros.push(`nome.ilike.%${busca}%`, `cidade.ilike.%${busca}%`, `categoria.ilike.%${busca}%`)
-      if (filtros.length > 0) query = query.or(filtros.join(','))
+  // Carregar ao mudar página
+  useEffect(() => {
+    carregarMaisEmpresas()
+  }, [pagina])
 
-      if (cidade) query = query.eq('cidade', cidade)
-      if (categoria) query = query.eq('categoria', categoria)
-      if (notaMin) query = query.gte('nota_media', notaMin)
+  const carregarMaisEmpresas = async () => {
+    setCarregando(true)
 
-      const { data, error } = await query.order('created_at', { ascending: false })
-      if (!error && data) setEmpresas(data as Empresa[])
+    let query = supabase.from('empresas').select('*')
+
+    const filtros = []
+    if (busca) filtros.push(`nome.ilike.%${busca}%`, `cidade.ilike.%${busca}%`, `categoria.ilike.%${busca}%`)
+    if (filtros.length > 0) query = query.or(filtros.join(','))
+
+    if (cidade) query = query.eq('cidade', cidade)
+    if (categoria) query = query.eq('categoria', categoria)
+    if (notaMin) query = query.gte('nota_media', notaMin)
+
+    const inicio = pagina * limitePorPagina
+    const fim = inicio + limitePorPagina - 1
+
+    const { data, error } = await query.range(inicio, fim).order('created_at', { ascending: false })
+
+    if (!error && data) {
+      setEmpresas((prev) => [...prev, ...data])
+      setTemMais(data.length === limitePorPagina)
     }
 
-    carregarEmpresas()
-  }, [busca, cidade, categoria, notaMin])
+    setCarregando(false)
+  }
 
   const aplicarFiltros = () => {
     const params = new URLSearchParams()
@@ -50,7 +75,6 @@ export default function ListaEmpresasPage() {
     if (cidade) params.set('cidade', cidade)
     if (categoria) params.set('categoria', categoria)
     if (notaMin) params.set('nota', notaMin.toString())
-
     router.push(`/empresas?${params.toString()}`)
   }
 
@@ -100,27 +124,41 @@ export default function ListaEmpresasPage() {
       {empresas.length === 0 ? (
         <p className="text-center text-gray-600">Nenhuma empresa encontrada.</p>
       ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {empresas.map((empresa) => (
-            <div key={empresa.id} className="border rounded-xl shadow bg-white p-6 hover:shadow-lg transition">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-xl font-semibold">{empresa.nome}</h2>
-                <span className="text-sm px-2 py-1 bg-blue-100 text-blue-800 rounded">
-                  {empresa.categoria}
-                </span>
+        <>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {empresas.map((empresa) => (
+              <div key={empresa.id} className="border rounded-xl shadow bg-white p-6 hover:shadow-lg transition">
+                <div className="flex items-center justify-between mb-2">
+                  <h2 className="text-xl font-semibold">{empresa.nome}</h2>
+                  <span className="text-sm px-2 py-1 bg-blue-100 text-blue-800 rounded">
+                    {empresa.categoria}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-600 mb-2">{empresa.descricao?.slice(0, 100)}...</p>
+                <div className="flex flex-col gap-1 text-sm text-gray-700">
+                  <span className="flex items-center gap-1"><MapPin size={16} /> {empresa.cidade}</span>
+                  <span className="flex items-center gap-1"><Phone size={16} /> {empresa.telefone}</span>
+                  {empresa.nota_media && (
+                    <span className="flex items-center gap-1"><Star size={16} className="text-yellow-500" /> {empresa.nota_media.toFixed(1)} / 5</span>
+                  )}
+                </div>
+                <button className="mt-4 text-blue-600 hover:underline text-sm font-medium">Ver detalhes</button>
               </div>
-              <p className="text-sm text-gray-600 mb-2">{empresa.descricao?.slice(0, 100)}...</p>
-              <div className="flex flex-col gap-1 text-sm text-gray-700">
-                <span className="flex items-center gap-1"><MapPin size={16} /> {empresa.cidade}</span>
-                <span className="flex items-center gap-1"><Phone size={16} /> {empresa.telefone}</span>
-                {empresa.nota_media && (
-                  <span className="flex items-center gap-1"><Star size={16} className="text-yellow-500" /> {empresa.nota_media.toFixed(1)} / 5</span>
-                )}
-              </div>
-              <button className="mt-4 text-blue-600 hover:underline text-sm font-medium">Ver detalhes</button>
+            ))}
+          </div>
+
+          {temMais && (
+            <div className="text-center mt-8">
+              <button
+                onClick={() => setPagina((prev) => prev + 1)}
+                disabled={carregando}
+                className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded"
+              >
+                {carregando ? 'Carregando...' : 'Ver mais'}
+              </button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </main>
   )
