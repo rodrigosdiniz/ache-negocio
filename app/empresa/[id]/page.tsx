@@ -47,7 +47,7 @@ export default async function EmpresaPage({ params, searchParams }: { params: { 
     .eq('empresa_id', params.id)
 
   const { data: avaliacoes } = await supabase.from('avaliacoes')
-    .select('nota, comentario, created_at')
+    .select('*')
     .eq('empresa_id', params.id)
     .order('created_at', { ascending: false })
     .range(from, to)
@@ -110,6 +110,19 @@ export default async function EmpresaPage({ params, searchParams }: { params: { 
                 <div className="flex items-center gap-2">{renderStars(a.nota)}</div>
                 <p className="mt-1">{a.comentario}</p>
                 <p className="text-sm text-gray-500 mt-1">{new Date(a.created_at).toLocaleDateString()}</p>
+                {a.resposta && (
+                  <div className="mt-3 p-3 border-l-4 border-blue-500 bg-blue-50">
+                    <p className="font-medium text-blue-700">Resposta do dono:</p>
+                    <p>{a.resposta}</p>
+                  </div>
+                )}
+                {user?.id === empresa.user_id && !a.resposta && (
+                  <form action="/api/responder" method="POST" className="mt-3">
+                    <input type="hidden" name="avaliacao_id" value={a.id} />
+                    <textarea name="resposta" rows={2} placeholder="Responder..." className="w-full border px-3 py-2 rounded"></textarea>
+                    <button type="submit" className="mt-1 bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">Responder</button>
+                  </form>
+                )}
               </li>
             ))}
           </ul>
