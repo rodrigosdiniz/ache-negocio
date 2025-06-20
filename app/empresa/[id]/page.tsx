@@ -4,6 +4,8 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
+import { createClient } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const { data } = await supabase.from('empresas').select('nome, cidade').eq('id', params.id).single()
@@ -14,6 +16,10 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 }
 
 export default async function EmpresaPage({ params }: { params: { id: string } }) {
+  const supabase = createClient(cookies())
+  const { data: userData } = await supabase.auth.getUser()
+  const user = userData.user
+
   const { data: empresa } = await supabase.from('empresas').select('*').eq('id', params.id).single()
   if (!empresa) return notFound()
 
@@ -68,6 +74,16 @@ export default async function EmpresaPage({ params }: { params: { id: string } }
             ))}
           </ul>
         </div>
+      )}
+
+      {user && (
+        <form action="/api/avaliar" method="POST" className="mt-8 border-t pt-6 space-y-4">
+          <h2 className="text-xl font-bold">Deixe sua avaliação</h2>
+          <input type="hidden" name="empresa_id" value={empresa.id} />
+          <input type="number" name="nota" min={1} max={5} required className="w-20 border rounded px-2 py-1" placeholder="Nota (1 a 5)" />
+          <textarea name="comentario" required placeholder="Comentário" className="w-full border rounded px-3 py-2" rows={3}></textarea>
+          <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Enviar Avaliação</button>
+        </form>
       )}
     </main>
   )
