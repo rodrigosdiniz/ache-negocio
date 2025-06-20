@@ -18,13 +18,16 @@ const planos = [
 ]
 
 export default function PaginaPrecos() {
-  const [loading, setLoading] = useState(false)
+  const [loadingId, setLoadingId] = useState<string | null>(null)
 
   const iniciarCheckout = async (priceId: string) => {
-    setLoading(true)
+    setLoadingId(priceId)
     try {
       const res = await fetch('/api/checkout', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({ priceId })
       })
 
@@ -38,7 +41,7 @@ export default function PaginaPrecos() {
       console.error(error)
       alert('Erro ao iniciar checkout.')
     } finally {
-      setLoading(false)
+      setLoadingId(null)
     }
   }
 
@@ -48,7 +51,10 @@ export default function PaginaPrecos() {
 
       <div className="grid md:grid-cols-2 gap-6">
         {planos.map((plano) => (
-          <div key={plano.priceId} className="border rounded-xl p-6 shadow-md bg-white flex flex-col justify-between">
+          <div
+            key={plano.priceId}
+            className="border rounded-xl p-6 shadow-md bg-white flex flex-col justify-between"
+          >
             <div>
               <h2 className="text-2xl font-semibold mb-2">{plano.nome}</h2>
               <p className="text-gray-700 mb-4">{plano.descricao}</p>
@@ -56,10 +62,10 @@ export default function PaginaPrecos() {
             </div>
             <button
               onClick={() => iniciarCheckout(plano.priceId)}
-              disabled={loading}
+              disabled={loadingId === plano.priceId}
               className="mt-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded disabled:opacity-50"
             >
-              {loading ? 'Processando...' : 'Assinar'}
+              {loadingId === plano.priceId ? 'Processando...' : 'Assinar'}
             </button>
           </div>
         ))}
