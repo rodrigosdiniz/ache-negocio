@@ -21,7 +21,10 @@ export default async function DashboardPage() {
       <h1 className="text-3xl font-bold mb-4">Olá, {user.email}</h1>
       <p className="text-gray-700 mb-6">Você está logado com sucesso.</p>
 
-      <Link href="/dashboard/perfil" className="text-blue-600 hover:underline">
+      <Link
+        href="/dashboard/perfil"
+        className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded mb-4"
+      >
         Acessar perfil
       </Link>
 
