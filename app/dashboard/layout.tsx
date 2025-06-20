@@ -7,6 +7,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import LogoutButton from './logout-button'
 import Link from 'next/link'
 import { Home, Menu, User, X } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<any>(null)
@@ -62,24 +63,37 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <Menu size={20} />
       </button>
 
-      {/* Menu flutuante no mobile */}
-      {mobileOpen && (
-        <div className="fixed inset-0 z-40 flex">
-          <div className="w-64 h-full bg-gray-900 text-white p-4">
-            <button
-              onClick={() => setMobileOpen(false)}
-              className="text-white absolute top-4 right-4"
+      {/* Menu flutuante com animação */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            className="fixed inset-0 z-40 flex"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="w-64 h-full bg-gray-900 text-white p-4 relative"
+              initial={{ x: -300 }}
+              animate={{ x: 0 }}
+              exit={{ x: -300 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             >
-              <X size={20} />
-            </button>
-            <Sidebar />
-          </div>
-          <div
-            className="flex-1 bg-black bg-opacity-50"
-            onClick={() => setMobileOpen(false)}
-          ></div>
-        </div>
-      )}
+              <button
+                onClick={() => setMobileOpen(false)}
+                className="text-white absolute top-4 right-4"
+              >
+                <X size={20} />
+              </button>
+              <Sidebar />
+            </motion.div>
+            <div
+              className="flex-1 bg-black bg-opacity-50"
+              onClick={() => setMobileOpen(false)}
+            ></div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <main className="flex-1 bg-gray-50 px-6 py-6 w-full">
         {children}
