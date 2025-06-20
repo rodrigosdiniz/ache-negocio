@@ -1,8 +1,9 @@
-import { redirect } from 'next/navigation'
+// app/dashboard/perfil/page.tsx
 
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 import { Star } from 'lucide-react'
@@ -27,15 +28,19 @@ interface Avaliacao {
 }
 
 export default function DashboardPerfil() {
+  const router = useRouter()
   const [empresas, setEmpresas] = useState<Empresa[]>([])
   const [avaliacoes, setAvaliacoes] = useState<Avaliacao[]>([])
-  const [userId, setUserId] = useState<string>('')
+  const [carregando, setCarregando] = useState(true)
 
   useEffect(() => {
     const carregar = async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-      setUserId(user.id)
+
+      if (!user) {
+        router.push('/login')
+        return
+      }
 
       const { data: empresas } = await supabase
         .from('empresas')
@@ -50,10 +55,15 @@ export default function DashboardPerfil() {
 
       if (empresas) setEmpresas(empresas)
       if (avaliacoes) setAvaliacoes(avaliacoes)
+      setCarregando(false)
     }
 
     carregar()
-  }, [])
+  }, [router])
+
+  if (carregando) {
+    return <p className="text-center py-20">Carregando perfil...</p>
+  }
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-10">
