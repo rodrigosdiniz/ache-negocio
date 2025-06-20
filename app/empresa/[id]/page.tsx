@@ -7,6 +7,7 @@ import { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { Toast } from '@/components/ui/toast'
+import { Star } from 'lucide-react'
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const { data } = await supabase.from('empresas').select('nome, cidade').eq('id', params.id).single()
@@ -14,6 +15,15 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     title: `${data?.nome} em ${data?.cidade} | Ache Negócio`,
     description: `Encontre ${data?.nome}, localizada em ${data?.cidade}. Veja informações, contato e mais.`
   }
+}
+
+function renderStars(nota: number) {
+  return Array.from({ length: 5 }, (_, i) => (
+    <Star
+      key={i}
+      className={`inline w-5 h-5 ${i < nota ? 'fill-yellow-400 stroke-yellow-500' : 'stroke-gray-400'}`}
+    />
+  ))
 }
 
 export default async function EmpresaPage({ params, searchParams }: { params: { id: string }, searchParams: { page?: string } }) {
@@ -67,20 +77,4 @@ export default async function EmpresaPage({ params, searchParams }: { params: { 
       <p className="mb-4">{empresa.descricao}</p>
 
       <div className="mb-4 space-y-1">
-        <p><strong>Telefone:</strong> {empresa.telefone}</p>
-        <p><strong>Email:</strong> {empresa.email}</p>
-        {empresa.website && (
-          <p><strong>Site:</strong> <a href={empresa.website} target="_blank" className="text-blue-600 underline">{empresa.website}</a></p>
-        )}
-        {whatsappLink && (
-          <a href={whatsappLink} target="_blank" className="inline-block mt-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Entrar no WhatsApp</a>
-        )}
-      </div>
-
-      {media && (
-        <div className="mt-6">
-          <h2 className="text-xl font-semibold mb-2">Avaliações (página {page})</h2>
-          <p className="mb-2">Nota média: ⭐ {media}</p>
-          <ul className="space-y-2">
-            {avaliacoes!.map((a, i) => (
-              <li key={i} className
+        <p><strong>Telefone:</
