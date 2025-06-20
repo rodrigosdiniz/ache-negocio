@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import LogoutButton from './logout-button'
 import Link from 'next/link'
+import { Home, User } from 'lucide-react'
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<any>(null)
@@ -25,22 +26,21 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     carregar()
   }, [pathname, supabase])
 
+  const linkClass = (path: string) =>
+    `flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-700 ${
+      pathname === path ? 'bg-gray-800 font-semibold' : ''
+    }`
+
   return (
     <div className="flex min-h-screen">
       {/* Menu lateral fixo */}
-      <aside className="w-64 bg-gray-900 text-white flex flex-col py-6 px-4 space-y-4 sticky top-0 h-screen">
+      <aside className="hidden md:flex w-64 bg-gray-900 text-white flex-col py-6 px-4 space-y-4 sticky top-0 h-screen">
         <h2 className="text-xl font-semibold mb-6">Ache Negócio</h2>
-        <Link
-          href="/dashboard"
-          className="hover:bg-gray-700 rounded px-3 py-2"
-        >
-          Início
+        <Link href="/dashboard" className={linkClass('/dashboard')}>
+          <Home size={18} /> Início
         </Link>
-        <Link
-          href="/dashboard/perfil"
-          className="hover:bg-gray-700 rounded px-3 py-2"
-        >
-          Perfil
+        <Link href="/dashboard/perfil" className={linkClass('/dashboard/perfil')}>
+          <User size={18} /> Perfil
         </Link>
         <div className="mt-auto">
           <LogoutButton />
