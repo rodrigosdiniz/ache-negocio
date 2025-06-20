@@ -1,0 +1,92 @@
+// SOBRE O PROJETO (/sobre/page.tsx)
+export const SobrePage = () => (
+  <main className="max-w-3xl mx-auto px-4 py-10">
+    <h1 className="text-3xl font-bold mb-6">Sobre o Ache Negócio</h1>
+    <p className="mb-4">
+      O Ache Negócio é uma plataforma moderna de busca inteligente que conecta pessoas a empresas de forma rápida e eficaz.
+      Nosso objetivo é facilitar o acesso a serviços de qualidade, promovendo a visibilidade de negócios locais em todo o Brasil.
+    </p>
+    <p>
+      Ao contrário de diretórios tradicionais, oferecemos avaliações reais, sistema de planos escaláveis, integração com redes sociais
+      e uma experiência leve tanto no mobile quanto no desktop. Estamos comprometidos com a inovação e a transparência.
+    </p>
+  </main>
+)
+
+// POLÍTICA DE PRIVACIDADE (/privacidade/page.tsx)
+export const PoliticaPage = () => (
+  <main className="max-w-3xl mx-auto px-4 py-10">
+    <h1 className="text-3xl font-bold mb-6">Política de Privacidade</h1>
+    <p className="mb-4">
+      Respeitamos sua privacidade. As informações coletadas são utilizadas exclusivamente para fins operacionais,
+      como autenticação, personalização de conteúdo e envio de notificações.
+    </p>
+    <p className="mb-4">
+      Não compartilhamos seus dados com terceiros sem consentimento. Você pode solicitar a remoção dos dados a qualquer momento,
+      conforme previsto na LGPD.
+    </p>
+    <p>
+      Para dúvidas, entre em contato através do nosso formulário em <a href="/contato" className="text-blue-600 underline">/contato</a>.
+    </p>
+  </main>
+)
+
+// TERMOS DE USO (/termos/page.tsx)
+export const TermosPage = () => (
+  <main className="max-w-3xl mx-auto px-4 py-10">
+    <h1 className="text-3xl font-bold mb-6">Termos de Uso</h1>
+    <p className="mb-4">
+      Ao utilizar o Ache Negócio, você concorda com os seguintes termos:
+    </p>
+    <ul className="list-disc list-inside space-y-2 mb-4">
+      <li>É proibido o uso da plataforma para fins ilegais ou fraudulentos.</li>
+      <li>As avaliações publicadas são de responsabilidade dos usuários.</li>
+      <li>O Ache Negócio reserva-se o direito de remover conteúdo ofensivo ou inapropriado.</li>
+      <li>Empresas que desejarem destaque devem aderir a um plano ativo.</li>
+    </ul>
+    <p>
+      Estes termos podem ser alterados a qualquer momento. Consulte esta página regularmente para atualizações.
+    </p>
+  </main>
+)
+
+// FALE CONOSCO (/contato/page.tsx)
+'use client'
+
+import { useState } from 'react'
+
+export const ContatoPage = () => {
+  const [nome, setNome] = useState('')
+  const [email, setEmail] = useState('')
+  const [mensagem, setMensagem] = useState('')
+  const [enviado, setEnviado] = useState(false)
+
+  const enviar = async (e: React.FormEvent) => {
+    e.preventDefault()
+    await fetch('/api/contato', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nome, email, mensagem })
+    })
+    setEnviado(true)
+    setNome('')
+    setEmail('')
+    setMensagem('')
+  }
+
+  return (
+    <main className="max-w-2xl mx-auto px-4 py-10">
+      <h1 className="text-3xl font-bold mb-6">Fale Conosco</h1>
+      {enviado ? (
+        <p className="text-green-600">Mensagem enviada com sucesso! Entraremos em contato em breve.</p>
+      ) : (
+        <form onSubmit={enviar} className="space-y-4">
+          <input type="text" required placeholder="Seu nome" value={nome} onChange={e => setNome(e.target.value)} className="w-full border p-2 rounded" />
+          <input type="email" required placeholder="Seu email" value={email} onChange={e => setEmail(e.target.value)} className="w-full border p-2 rounded" />
+          <textarea required placeholder="Sua mensagem" value={mensagem} onChange={e => setMensagem(e.target.value)} className="w-full border p-2 rounded h-32" />
+          <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Enviar</button>
+        </form>
+      )}
+    </main>
+  )
+} 
