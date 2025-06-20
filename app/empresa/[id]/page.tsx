@@ -1,17 +1,19 @@
+'use client'
+
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
-import { Star, Award } from 'lucide-react'
 import { Toast } from '@/components/ui/toast'
+import { Award, Star } from 'lucide-react'
+import { motion } from 'framer-motion'
 import FormAvaliacao from '@/components/FormAvaliacao'
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const supabase = createClient(cookies())
   const { data } = await supabase.from('empresas').select('nome, cidade').eq('id', params.id).single()
-
   return {
     title: `${data?.nome} em ${data?.cidade} | Ache Negócio`,
     description: `Encontre ${data?.nome}, localizada em ${data?.cidade}. Veja informações, contato e avaliações.`
@@ -19,12 +21,20 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 }
 
 function renderStars(nota: number, size: string = 'w-5 h-5') {
-  return Array.from({ length: 5 }, (_, i) => (
-    <Star
-      key={i}
-      className={`${size} ${i < nota ? 'fill-yellow-400 stroke-yellow-500' : 'stroke-gray-400'}`}
-    />
-  ))
+  return (
+    <div className="flex gap-1">
+      {Array.from({ length: 5 }, (_, i) => (
+        <motion.div
+          key={i}
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: i * 0.05 }}
+        >
+          <Star className={`${size} ${i < nota ? 'fill-yellow-400 stroke-yellow-500' : 'stroke-gray-400'}`} />
+        </motion.div>
+      ))}
+    </div>
+  )
 }
 
 export default async function EmpresaPage({ params, searchParams }: { params: { id: string }, searchParams: { page?: string } }) {
@@ -50,7 +60,7 @@ export default async function EmpresaPage({ params, searchParams }: { params: { 
 
   const { data: avaliacoes } = await supabase
     .from('avaliacoes')
-    .select('*')
+    .select('*, user:auth.users(full_name)')
     .eq('empresa_id', params.id)
     .order('created_at', { ascending: false })
     .range(from, to)
@@ -115,21 +125,29 @@ export default async function EmpresaPage({ params, searchParams }: { params: { 
           <ul className="space-y-2">
             {avaliacoes.map((a, i) => (
               <li key={i} className="border p-4 rounded">
-                <div className="flex items-center gap-2">{renderStars(a.nota)}</div>
+                {renderStars(a.nota)}
                 <p className="mt-1">{a.comentario}</p>
-                <p className="text-sm text-gray-500 mt-1">{new Date(a.created_at).toLocaleDateString()}</p>
+                <p className="text-sm text-gray-500">Avaliado por {a.user?.full_name || 'usuário'} em {new Date(a.created_at).toLocaleDateString()}</p>
+
                 {a.resposta && (
                   <div className="mt-3 p-3 border-l-4 border-blue-500 bg-blue-50">
                     <p className="font-medium text-blue-700">Resposta do dono:</p>
                     <p>{a.resposta}</p>
                   </div>
                 )}
-                {user?.id === empresa.user_id && !a.resposta && (
-                  <form action="/api/responder" method="POST" className="mt-3">
-                    <input type="hidden" name="avaliacao_id" value={a.id} />
-                    <textarea name="resposta" rows={2} placeholder="Responder..." className="w-full border px-3 py-2 rounded"></textarea>
-                    <button type="submit" className="mt-1 bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">Responder</button>
-                  </form>
+
+                {/* Permitir edição/exclusão */}
+                {user?.id === a.user_id && (
+                  <div className="flex gap-3 mt-2">
+                    <form action="/api/avaliacoes/editar" method="POST">
+                      <input type="hidden" name="id" value={a.id} />
+                      <button type="submit" className="text-sm text-blue-600 underline">Editar</button>
+                    </form>
+                    <form action="/api/avaliacoes/excluir" method="POST" onSubmit={(e) => !confirm('Excluir esta avaliação?') && e.preventDefault()}>
+                      <input type="hidden" name="id" value={a.id} />
+                      <button type="submit" className="text-sm text-red-600 underline">Excluir</button>
+                    </form>
+                  </div>
                 )}
               </li>
             ))}
@@ -147,10 +165,7 @@ export default async function EmpresaPage({ params, searchParams }: { params: { 
         <FormAvaliacao
           empresaId={empresa.id}
           userId={user.id}
-          onAvaliado={() => {
-            // opção 1: reload de página (Next.js 13+)
-            location.reload()
-          }}
+          onAvaliado={() => location.reload()}
         />
       )}
     </main>
