@@ -1,27 +1,28 @@
-// app/empresa/[id]/page.tsx
-import { supabase } from '@/lib/supabase'
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
-import { Toast } from '@/components/ui/toast'
+import { createClient } from '@/lib/supabase/server'
 import { Star, Award } from 'lucide-react'
+import { Toast } from '@/components/ui/toast'
+import FormAvaliacao from '@/components/FormAvaliacao'
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const supabase = createClient(cookies())
   const { data } = await supabase.from('empresas').select('nome, cidade').eq('id', params.id).single()
+
   return {
     title: `${data?.nome} em ${data?.cidade} | Ache Negócio`,
-    description: `Encontre ${data?.nome}, localizada em ${data?.cidade}. Veja informações, contato e mais.`
+    description: `Encontre ${data?.nome}, localizada em ${data?.cidade}. Veja informações, contato e avaliações.`
   }
 }
 
-function renderStars(nota: number, tamanho: string = 'w-5 h-5') {
+function renderStars(nota: number, size: string = 'w-5 h-5') {
   return Array.from({ length: 5 }, (_, i) => (
     <Star
       key={i}
-      className={`inline ${tamanho} ${i < nota ? 'fill-yellow-400 stroke-yellow-500' : 'stroke-gray-400'}`}
+      className={`${size} ${i < nota ? 'fill-yellow-400 stroke-yellow-500' : 'stroke-gray-400'}`}
     />
   ))
 }
@@ -42,11 +43,13 @@ export default async function EmpresaPage({ params, searchParams }: { params: { 
   const from = (page - 1) * pageSize
   const to = from + pageSize - 1
 
-  const { data: todasAvaliacoes } = await supabase.from('avaliacoes')
+  const { data: todasAvaliacoes } = await supabase
+    .from('avaliacoes')
     .select('nota')
     .eq('empresa_id', params.id)
 
-  const { data: avaliacoes } = await supabase.from('avaliacoes')
+  const { data: avaliacoes } = await supabase
+    .from('avaliacoes')
     .select('*')
     .eq('empresa_id', params.id)
     .order('created_at', { ascending: false })
@@ -90,22 +93,27 @@ export default async function EmpresaPage({ params, searchParams }: { params: { 
 
       <p className="mb-4">{empresa.descricao}</p>
 
-      <div className="mb-4 space-y-1">
+      <div className="mb-6 space-y-1">
         <p><strong>Telefone:</strong> {empresa.telefone}</p>
         <p><strong>Email:</strong> {empresa.email}</p>
         {empresa.website && (
           <p><strong>Site:</strong> <a href={empresa.website} target="_blank" className="text-blue-600 underline">{empresa.website}</a></p>
         )}
         {whatsappLink && (
-          <a href={whatsappLink} target="_blank" className="inline-block mt-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Entrar no WhatsApp</a>
+          <a href={whatsappLink} target="_blank" className="inline-block mt-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+            Entrar no WhatsApp
+          </a>
         )}
       </div>
 
-      {media && (
-        <div className="mt-6">
-          <h2 className="text-xl font-semibold mb-2">Avaliações (página {page})</h2>
+      {/* Lista de avaliações */}
+      <div className="mt-6">
+        <h2 className="text-xl font-semibold mb-2">Avaliações (página {page})</h2>
+        {avaliacoes?.length === 0 ? (
+          <p className="text-sm text-gray-600">Nenhuma avaliação ainda.</p>
+        ) : (
           <ul className="space-y-2">
-            {avaliacoes!.map((a, i) => (
+            {avaliacoes.map((a, i) => (
               <li key={i} className="border p-4 rounded">
                 <div className="flex items-center gap-2">{renderStars(a.nota)}</div>
                 <p className="mt-1">{a.comentario}</p>
@@ -126,22 +134,24 @@ export default async function EmpresaPage({ params, searchParams }: { params: { 
               </li>
             ))}
           </ul>
+        )}
 
-          <div className="flex justify-between mt-4">
-            {page > 1 && <Link href={`?page=${page - 1}`} className="text-blue-600">← Anterior</Link>}
-            {to + 1 < total && <Link href={`?page=${page + 1}`} className="text-blue-600 ml-auto">Próxima →</Link>}
-          </div>
+        <div className="flex justify-between mt-4">
+          {page > 1 && <Link href={`?page=${page - 1}`} className="text-blue-600">← Anterior</Link>}
+          {to + 1 < total && <Link href={`?page=${page + 1}`} className="text-blue-600 ml-auto">Próxima →</Link>}
         </div>
-      )}
+      </div>
 
+      {/* Formulário de avaliação */}
       {user && (
-        <form action="/api/avaliar" method="POST" className="mt-8 border-t pt-6 space-y-4">
-          <h2 className="text-xl font-bold">Deixe sua avaliação</h2>
-          <input type="hidden" name="empresa_id" value={empresa.id} />
-          <input type="number" name="nota" min={1} max={5} required className="w-20 border rounded px-2 py-1" placeholder="Nota (1 a 5)" />
-          <textarea name="comentario" required placeholder="Comentário" className="w-full border rounded px-3 py-2" rows={3}></textarea>
-          <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Enviar Avaliação</button>
-        </form>
+        <FormAvaliacao
+          empresaId={empresa.id}
+          userId={user.id}
+          onAvaliado={() => {
+            // opção 1: reload de página (Next.js 13+)
+            location.reload()
+          }}
+        />
       )}
     </main>
   )
