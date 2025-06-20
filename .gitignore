@@ -1,0 +1,24 @@
+# Evita subir variáveis sensíveis
+.env
+.env.local
+.env.*.local
+
+# Evita arquivos gerados automaticamente
+node_modules/
+.next/
+out/
+dist/
+
+# Logs e cache
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.cache/
+
+# Sistemas
+.DS_Store
+Thumbs.db
+
+# VSCode
+.vscode/
