@@ -6,6 +6,7 @@ import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
+import { Toast } from '@/components/ui/toast'
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const { data } = await supabase.from('empresas').select('nome, cidade').eq('id', params.id).single()
@@ -17,6 +18,9 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 
 export default async function EmpresaPage({ params }: { params: { id: string } }) {
   const supabase = createClient(cookies())
+  const cookieStore = cookies()
+  const toastMsg = cookieStore.get('toast')?.value
+
   const { data: userData } = await supabase.auth.getUser()
   const user = userData.user
 
@@ -38,6 +42,8 @@ export default async function EmpresaPage({ params }: { params: { id: string } }
 
   return (
     <main className="max-w-3xl mx-auto px-4 py-10">
+      {toastMsg && <Toast title="Sucesso" description={toastMsg} variant="success" />}
+
       <Link href="/empresas" className="text-blue-600 underline mb-4 inline-block">← Voltar</Link>
 
       {empresa.imagem_url && (
