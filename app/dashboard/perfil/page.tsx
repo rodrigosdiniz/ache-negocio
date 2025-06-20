@@ -1,3 +1,5 @@
+import { redirect } from 'next/navigation'
+
 'use client'
 
 import { useEffect, useState } from 'react'
