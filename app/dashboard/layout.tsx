@@ -29,21 +29,27 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   }, [pathname, supabase])
 
   const linkClass = (path: string) =>
-    `flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-700 ${
+    `flex items-center gap-2 px-3 py-2 rounded transition-colors duration-200 hover:bg-gray-700 ${
       pathname === path ? 'bg-gray-800 font-semibold' : ''
     }`
 
   const Sidebar = () => (
     <nav className="w-64 bg-gray-900 text-white flex-col py-6 px-4 space-y-4 h-full">
       <h2 className="text-xl font-semibold mb-6">Ache Negócio</h2>
-      <Link href="/dashboard" className={linkClass('/dashboard')} onClick={() => setMobileOpen(false)}>
-        <Home size={18} /> Início
-      </Link>
-      <Link href="/dashboard/perfil" className={linkClass('/dashboard/perfil')} onClick={() => setMobileOpen(false)}>
-        <User size={18} /> Perfil
-      </Link>
+      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+        <Link href="/dashboard" className={linkClass('/dashboard')} onClick={() => setMobileOpen(false)}>
+          <Home size={18} /> Início
+        </Link>
+      </motion.div>
+      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+        <Link href="/dashboard/perfil" className={linkClass('/dashboard/perfil')} onClick={() => setMobileOpen(false)}>
+          <User size={18} /> Perfil
+        </Link>
+      </motion.div>
       <div className="mt-auto">
-        <LogoutButton />
+        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <LogoutButton />
+        </motion.div>
       </div>
     </nav>
   )
@@ -56,12 +62,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       </aside>
 
       {/* Botão hamburguer no topo para mobile */}
-      <button
+      <motion.button
+        whileTap={{ scale: 0.9 }}
         onClick={() => setMobileOpen(true)}
         className="md:hidden fixed top-4 left-4 z-50 p-2 bg-gray-900 text-white rounded-md shadow-md"
       >
         <Menu size={20} />
-      </button>
+      </motion.button>
 
       {/* Menu flutuante com animação */}
       <AnimatePresence>
@@ -79,12 +86,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               exit={{ x: -300 }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             >
-              <button
+              <motion.button
+                whileTap={{ scale: 0.9 }}
                 onClick={() => setMobileOpen(false)}
                 className="text-white absolute top-4 right-4"
               >
                 <X size={20} />
-              </button>
+              </motion.button>
               <Sidebar />
             </motion.div>
             <div
