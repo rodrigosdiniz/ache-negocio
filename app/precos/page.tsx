@@ -1,59 +1,40 @@
+// app/precos/page.tsx
 'use client'
 
 import { useState } from 'react'
-import { CheckCircle, Star } from 'lucide-react'
+import { motion } from 'framer-motion'
 
 const planos = [
   {
     nome: 'Plano Gratuito',
     preco: 'R$ 0,00',
-    priceId: null,
-    destaque: false,
-    descricao: 'Para quem quer começar sem compromisso.',
-    beneficios: [
-      'Cadastro de 1 produto',
-      'Aparece nas buscas locais',
-      'Suporte comunitário'
-    ]
+    descricao: 'Para começar sem custo.',
+    priceId: null
   },
   {
     nome: 'Plano Básico',
     preco: 'R$ 8,00/mês',
-    priceId: 'price_1RYaxMDGX3huEh4zJhiwZNSH',
-    destaque: false,
-    descricao: 'Ideal para pequenos negócios que estão começando.',
-    beneficios: [
-      'Cadastro de até 10 produtos',
-      'Suporte por e-mail',
-      'Aparece nas buscas locais'
-    ]
+    descricao: 'Ideal para pequenos negócios.',
+    priceId: 'price_1RYaxMDGX3huEh4zJhiwZNSH'
   },
   {
     nome: 'Plano Profissional',
     preco: 'R$ 12,00/mês',
+    descricao: 'Mais vendido. Recomendado para empresas.',
     priceId: 'price_1RYaxNDGX3huEh4zt1pNbM9k',
-    destaque: true,
-    descricao: 'Recomendado para empresas com presença consolidada.',
-    beneficios: [
-      'Cadastro ilimitado de produtos',
-      'Suporte via WhatsApp',
-      'Anúncio em destaque',
-      'Integração com redes sociais'
-    ]
+    destaque: true
   }
 ]
 
 export default function PaginaPrecos() {
-  const [loadingId, setLoadingId] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
 
-  const iniciarCheckout = async (priceId: string) => {
-    setLoadingId(priceId)
+  const iniciarCheckout = async (priceId: string | null) => {
+    if (!priceId) return window.location.href = '/cadastro'
+    setLoading(true)
     try {
       const res = await fetch('/api/checkout', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify({ priceId })
       })
 
@@ -67,69 +48,43 @@ export default function PaginaPrecos() {
       console.error(error)
       alert('Erro ao iniciar checkout.')
     } finally {
-      setLoadingId(null)
+      setLoading(false)
     }
   }
 
   return (
-    <main className="max-w-6xl mx-auto px-4 py-12">
+    <main className="max-w-5xl mx-auto px-4 py-10">
       <h1 className="text-4xl font-bold text-center mb-10">Escolha seu plano</h1>
 
-      <div className="grid md:grid-cols-3 gap-8">
-        {planos.map((plano) => (
-          <div
+      <div className="grid md:grid-cols-3 gap-6">
+        {planos.map((plano, i) => (
+          <motion.div
             key={plano.nome}
-            className={`relative rounded-2xl border p-6 shadow-md flex flex-col justify-between transition-all ${
-              plano.destaque
-                ? 'border-blue-600 bg-blue-50'
-                : 'bg-white'
-            }`}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.1 }}
+            whileHover={{ scale: 1.03 }}
+            className="relative border rounded-xl p-6 shadow-md bg-white flex flex-col justify-between"
           >
-            {/* Selo "Mais vendido" */}
             {plano.destaque && (
-              <div className="absolute top-0 right-0 bg-yellow-400 text-yellow-900 text-xs font-semibold px-3 py-1 rounded-bl-xl flex items-center gap-1 shadow-md">
-                <Star className="w-4 h-4 fill-yellow-500 text-yellow-900 animate-pulse" />
+              <div className="absolute top-0 right-0 bg-yellow-400 text-black text-xs font-bold px-2 py-1 rounded-bl-xl">
                 Mais vendido
               </div>
             )}
-
             <div>
-              <h2 className="text-2xl font-bold mb-2">{plano.nome}</h2>
+              <h2 className="text-2xl font-semibold mb-2">{plano.nome}</h2>
               <p className="text-gray-700 mb-4">{plano.descricao}</p>
-              <p className="text-3xl font-extrabold text-blue-600 mb-4">{plano.preco}</p>
-
-              <ul className="space-y-2 mb-6">
-                {plano.beneficios.map((beneficio, i) => (
-                  <li key={i} className="flex items-center text-gray-800">
-                    <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
-                    {beneficio}
-                  </li>
-                ))}
-              </ul>
+              <p className="text-xl font-bold">{plano.preco}</p>
             </div>
-
-            {/* Botão de ação */}
-            {plano.priceId ? (
-              <button
-                onClick={() => iniciarCheckout(plano.priceId!)}
-                disabled={loadingId === plano.priceId}
-                className={`mt-4 w-full py-3 px-6 text-white rounded-xl font-semibold transition-all ${
-                  plano.destaque
-                    ? 'bg-blue-600 hover:bg-blue-700'
-                    : 'bg-gray-700 hover:bg-gray-800'
-                } ${loadingId === plano.priceId ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                {loadingId === plano.priceId ? 'Processando...' : 'Assinar'}
-              </button>
-            ) : (
-              <a
-                href="/cadastro"
-                className="mt-4 w-full inline-block text-center py-3 px-6 rounded-xl font-semibold text-white bg-green-600 hover:bg-green-700"
-              >
-                Criar conta grátis
-              </a>
-            )}
-          </div>
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={() => iniciarCheckout(plano.priceId)}
+              disabled={loading}
+              className="mt-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded disabled:opacity-50"
+            >
+              {plano.priceId ? 'Assinar' : 'Começar grátis'}
+            </motion.button>
+          </motion.div>
         ))}
       </div>
     </main>
