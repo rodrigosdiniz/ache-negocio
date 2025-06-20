@@ -2,23 +2,24 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { useToast } from '@/context/toast-context'
+import { uploadImagemEmpresa } from '@/lib/uploadImagem'
+import { useRouter } from 'next/navigation'
+import { toast } from '@/components/ui/use-toast'
 
-export default function CadastrarEmpresaPage() {
+export default function CadastrarEmpresa() {
   const router = useRouter()
-  const { showToast } = useToast()
   const [form, setForm] = useState({
     nome: '',
-    responsavel: '',
-    email: '',
-    telefone: '',
     cidade: '',
+    telefone: '',
+    email: '',
+    website: '',
     categoria: '',
-    descricao: '',
-    website: ''
+    descricao: ''
   })
+  const [imagem, setImagem] = useState<File | null>(null)
+  const [loading, setLoading] = useState(false)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value })
@@ -26,42 +27,45 @@ export default function CadastrarEmpresaPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const { error } = await supabase.from('empresas').insert([form])
+    setLoading(true)
+
+    const { data, error } = await supabase.from('empresas').insert({ ...form }).select().single()
 
     if (error) {
-      showToast('Erro ao cadastrar empresa', 'error')
-    } else {
-      showToast('Empresa cadastrada com sucesso!', 'success')
-      router.push('/')
+      toast({ title: 'Erro', description: 'Erro ao salvar empresa', variant: 'destructive' })
+      setLoading(false)
+      return
     }
+
+    let imagemUrl = ''
+    if (imagem) {
+      try {
+        imagemUrl = await uploadImagemEmpresa(data.id, imagem)
+        await supabase.from('empresas').update({ imagem_url: imagemUrl }).eq('id', data.id)
+      } catch (err) {
+        toast({ title: 'Erro na imagem', description: 'Erro ao enviar a imagem' })
+      }
+    }
+
+    toast({ title: 'Sucesso', description: 'Empresa cadastrada com sucesso!' })
+    router.push('/empresas')
   }
 
   return (
     <main className="max-w-2xl mx-auto px-4 py-10">
-      <h1 className="text-3xl font-bold mb-6 text-center">Cadastrar Empresa</h1>
-      <form onSubmit={handleSubmit} className="space-y-4 bg-white p-6 rounded shadow">
-        <input name="nome" placeholder="Nome da empresa" value={form.nome} onChange={handleChange} className="w-full border rounded px-3 py-2" required />
-        <input name="responsavel" placeholder="Responsável" value={form.responsavel} onChange={handleChange} className="w-full border rounded px-3 py-2" required />
-        <input name="email" type="email" placeholder="Email" value={form.email} onChange={handleChange} className="w-full border rounded px-3 py-2" required />
-        <input name="telefone" placeholder="Telefone" value={form.telefone} onChange={handleChange} className="w-full border rounded px-3 py-2" required />
-        <input name="cidade" placeholder="Cidade" value={form.cidade} onChange={handleChange} className="w-full border rounded px-3 py-2" required />
-        <input name="categoria" placeholder="Categoria" value={form.categoria} onChange={handleChange} className="w-full border rounded px-3 py-2" required />
-        <textarea name="descricao" placeholder="Descrição da empresa" value={form.descricao} onChange={handleChange} className="w-full border rounded px-3 py-2" required />
-        <input name="website" placeholder="Website (opcional)" value={form.website} onChange={handleChange} className="w-full border rounded px-3 py-2" />
-
-        <div className="flex flex-col md:flex-row justify-between gap-4 mt-6">
-          <button type="submit" className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded">
-            Cadastrar
-          </button>
-          <div className="flex gap-2">
-            <button type="button" onClick={() => router.push('/')} className="border px-4 py-2 rounded hover:bg-gray-100">
-              Voltar ao início
-            </button>
-            <button type="button" onClick={() => router.push('/empresas')} className="border px-4 py-2 rounded hover:bg-gray-100">
-              Ver empresas
-            </button>
-          </div>
-        </div>
+      <h1 className="text-3xl font-bold mb-6">Cadastrar Empresa</h1>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <input type="text" name="nome" placeholder="Nome" className="input" onChange={handleChange} required />
+        <input type="text" name="cidade" placeholder="Cidade" className="input" onChange={handleChange} required />
+        <input type="text" name="telefone" placeholder="Telefone" className="input" onChange={handleChange} required />
+        <input type="email" name="email" placeholder="Email" className="input" onChange={handleChange} required />
+        <input type="text" name="website" placeholder="Website" className="input" onChange={handleChange} />
+        <input type="text" name="categoria" placeholder="Categoria" className="input" onChange={handleChange} required />
+        <textarea name="descricao" placeholder="Descrição" className="input" rows={4} onChange={handleChange} required />
+        <input type="file" accept="image/*" onChange={(e) => e.target.files && setImagem(e.target.files[0])} />
+        <button disabled={loading} type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+          {loading ? 'Salvando...' : 'Cadastrar'}
+        </button>
       </form>
     </main>
   )
