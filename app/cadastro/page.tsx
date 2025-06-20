@@ -5,11 +5,13 @@ import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
+import Toast from '@/components/Toast'
 
 export default function CadastroPage() {
   const [email, setEmail] = useState('')
   const [nome, setNome] = useState('')
   const [mensagem, setMensagem] = useState('')
+  const [tipo, setTipo] = useState<'success' | 'error'>('success')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
@@ -28,8 +30,10 @@ export default function CadastroPage() {
 
     if (error) {
       setMensagem('Erro ao cadastrar: ' + error.message)
+      setTipo('error')
     } else {
       setMensagem('Cadastro iniciado! Verifique seu e-mail.')
+      setTipo('success')
       setEmail('')
       setNome('')
     }
@@ -81,19 +85,6 @@ export default function CadastroPage() {
         >
           {loading ? 'Enviando...' : 'Criar conta gratuita'}
         </motion.button>
-        <AnimatePresence>
-          {mensagem && (
-            <motion.p
-              className="text-center mt-4 text-sm text-green-600"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-            >
-              {mensagem}
-            </motion.p>
-          )}
-        </AnimatePresence>
       </motion.form>
-    </main>
-  )
-}
+      {mensagem && (
+        <Toast message={mensagem} type={tipo} onClose={() => setMen
