@@ -1,31 +1,89 @@
 // app/dashboard/perfil/page.tsx
-import { cookies } from 'next/headers'
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
-import { redirect } from 'next/navigation'
+'use client'
 
-export default async function PerfilPage() {
-  const supabase = createServerComponentClient({ cookies })
-  const {
-    data: { user },
-    error
-  } = await supabase.auth.getUser()
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
+import { motion, AnimatePresence } from 'framer-motion'
 
-  if (!user || error) {
-    return redirect('/login')
+export default function PerfilPage() {
+  const [usuario, setUsuario] = useState<any>(null)
+  const [nome, setNome] = useState('')
+  const [mensagem, setMensagem] = useState('')
+  const router = useRouter()
+
+  useEffect(() => {
+    const carregar = async () => {
+      const { data, error } = await supabase.auth.getUser()
+      if (error || !data.user) {
+        router.push('/login')
+      } else {
+        setUsuario(data.user)
+        setNome(data.user.user_metadata?.nome || '')
+      }
+    }
+    carregar()
+  }, [router])
+
+  const salvar = async () => {
+    const { error } = await supabase.auth.updateUser({
+      data: { nome }
+    })
+    if (error) {
+      setMensagem('Erro ao salvar')
+    } else {
+      setMensagem('Salvo com sucesso')
+    }
+    setTimeout(() => setMensagem(''), 3000)
   }
 
-  const nome = user.user_metadata?.nome || ''
-  const email = user.email
-
   return (
-    <main className="max-w-2xl mx-auto py-10 px-4">
-      <h1 className="text-3xl font-bold mb-6">Perfil do Usuário</h1>
-
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <p className="mb-4"><strong>Email:</strong> {email}</p>
-        <p className="mb-4"><strong>Nome:</strong> {nome || 'Não informado'}</p>
-        <p className="text-gray-500 text-sm">(Em breve: formulário para editar seus dados)</p>
+    <motion.div
+      className="max-w-xl mx-auto px-4 py-10"
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+    >
+      <h1 className="text-3xl font-bold mb-6">Perfil</h1>
+      <div className="space-y-4 bg-white p-6 rounded shadow">
+        <div>
+          <label className="block font-medium mb-1">Nome</label>
+          <input
+            type="text"
+            value={nome}
+            onChange={(e) => setNome(e.target.value)}
+            className="w-full border rounded px-3 py-2"
+          />
+        </div>
+        <div>
+          <label className="block font-medium mb-1">Email</label>
+          <input
+            type="email"
+            value={usuario?.email || ''}
+            disabled
+            className="w-full border rounded px-3 py-2 bg-gray-100 text-gray-600"
+          />
+        </div>
+        <motion.button
+          onClick={salvar}
+          whileTap={{ scale: 0.95 }}
+          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded"
+        >
+          Salvar
+        </motion.button>
+        <AnimatePresence>
+          {mensagem && (
+            <motion.p
+              className="text-sm mt-4 text-center text-green-600"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+            >
+              {mensagem}
+            </motion.p>
+          )}
+        </AnimatePresence>
       </div>
-    </main>
+    </motion.div>
   )
 }
