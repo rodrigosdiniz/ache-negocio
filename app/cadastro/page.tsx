@@ -1,30 +1,42 @@
 'use client'
 
 import { useState } from 'react'
+import { supabase } from '@/lib/supabase'
 
 export default function CadastroPage() {
   const [nome, setNome] = useState('')
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [mensagem, setMensagem] = useState('')
+  const [erro, setErro] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setMensagem('')
+    setErro('')
 
     if (!nome || !email || !senha) {
-      setMensagem('Por favor, preencha todos os campos.')
+      setErro('Por favor, preencha todos os campos.')
       return
     }
 
-    setMensagem('Enviando...')
+    const { error } = await supabase.auth.signUp({
+      email,
+      password: senha,
+      options: {
+        data: { nome }
+      }
+    })
 
-    // Aqui você pode conectar com Supabase ou outro backend
-    setTimeout(() => {
-      setMensagem('Conta criada com sucesso! 🚀')
+    if (error) {
+      console.error(error)
+      setErro(error.message)
+    } else {
+      setMensagem('Conta criada com sucesso! Verifique seu e-mail.')
       setNome('')
       setEmail('')
       setSenha('')
-    }, 1500)
+    }
   }
 
   return (
@@ -73,9 +85,8 @@ export default function CadastroPage() {
         </button>
       </form>
 
-      {mensagem && (
-        <p className="mt-4 text-center text-sm text-gray-700">{mensagem}</p>
-      )}
+      {erro && <p className="mt-4 text-center text-sm text-red-600">{erro}</p>}
+      {mensagem && <p className="mt-4 text-center text-sm text-green-600">{mensagem}</p>}
     </main>
   )
 }
