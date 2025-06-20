@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   }
 }
 
-export default async function EmpresaPage({ params }: { params: { id: string } }) {
+export default async function EmpresaPage({ params, searchParams }: { params: { id: string }, searchParams: { page?: string } }) {
   const supabase = createClient(cookies())
   const cookieStore = cookies()
   const toastMsg = cookieStore.get('toast')?.value
@@ -27,10 +27,19 @@ export default async function EmpresaPage({ params }: { params: { id: string } }
   const { data: empresa } = await supabase.from('empresas').select('*').eq('id', params.id).single()
   if (!empresa) return notFound()
 
+  const page = Number(searchParams.page || 1)
+  const pageSize = 5
+  const from = (page - 1) * pageSize
+  const to = from + pageSize - 1
+
+  const { data: allAvaliacoes } = await supabase.from('avaliacoes').select('*', { count: 'exact', head: true }).eq('empresa_id', params.id)
+  const total = allAvaliacoes?.length || 0
+
   const { data: avaliacoes } = await supabase.from('avaliacoes')
     .select('nota, comentario, created_at')
     .eq('empresa_id', params.id)
     .order('created_at', { ascending: false })
+    .range(from, to)
 
   const media = avaliacoes && avaliacoes.length > 0
     ? (avaliacoes.reduce((acc, cur) => acc + cur.nota, 0) / avaliacoes.length).toFixed(1)
@@ -68,29 +77,11 @@ export default async function EmpresaPage({ params }: { params: { id: string } }
 
       {media && (
         <div className="mt-6">
-          <h2 className="text-xl font-semibold mb-2">Avaliações ({avaliacoes!.length})</h2>
+          <h2 className="text-xl font-semibold mb-2">Avaliações (página {page})</h2>
           <p className="mb-2">Nota média: ⭐ {media}</p>
           <ul className="space-y-2">
             {avaliacoes!.map((a, i) => (
               <li key={i} className="border p-4 rounded">
                 <p>⭐ {a.nota}</p>
                 <p>{a.comentario}</p>
-                <p className="text-sm text-gray-500">{new Date(a.created_at).toLocaleDateString()}</p>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {user && (
-        <form action="/api/avaliar" method="POST" className="mt-8 border-t pt-6 space-y-4">
-          <h2 className="text-xl font-bold">Deixe sua avaliação</h2>
-          <input type="hidden" name="empresa_id" value={empresa.id} />
-          <input type="number" name="nota" min={1} max={5} required className="w-20 border rounded px-2 py-1" placeholder="Nota (1 a 5)" />
-          <textarea name="comentario" required placeholder="Comentário" className="w-full border rounded px-3 py-2" rows={3}></textarea>
-          <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Enviar Avaliação</button>
-        </form>
-      )}
-    </main>
-  )
-}
+                <p className="text-sm text-gray-500">{new Dat
