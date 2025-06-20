@@ -32,8 +32,9 @@ export default async function EmpresaPage({ params, searchParams }: { params: { 
   const from = (page - 1) * pageSize
   const to = from + pageSize - 1
 
-  const { data: allAvaliacoes } = await supabase.from('avaliacoes').select('*', { count: 'exact', head: true }).eq('empresa_id', params.id)
-  const total = allAvaliacoes?.length || 0
+  const { data: todasAvaliacoes } = await supabase.from('avaliacoes')
+    .select('nota')
+    .eq('empresa_id', params.id)
 
   const { data: avaliacoes } = await supabase.from('avaliacoes')
     .select('nota, comentario, created_at')
@@ -41,8 +42,9 @@ export default async function EmpresaPage({ params, searchParams }: { params: { 
     .order('created_at', { ascending: false })
     .range(from, to)
 
-  const media = avaliacoes && avaliacoes.length > 0
-    ? (avaliacoes.reduce((acc, cur) => acc + cur.nota, 0) / avaliacoes.length).toFixed(1)
+  const total = todasAvaliacoes?.length || 0
+  const media = todasAvaliacoes && total > 0
+    ? (todasAvaliacoes.reduce((acc, cur) => acc + cur.nota, 0) / total).toFixed(1)
     : null
 
   const whatsappLink = empresa.telefone?.replace(/[^0-9]/g, '').length >= 11
@@ -81,7 +83,4 @@ export default async function EmpresaPage({ params, searchParams }: { params: { 
           <p className="mb-2">Nota média: ⭐ {media}</p>
           <ul className="space-y-2">
             {avaliacoes!.map((a, i) => (
-              <li key={i} className="border p-4 rounded">
-                <p>⭐ {a.nota}</p>
-                <p>{a.comentario}</p>
-                <p className="text-sm text-gray-500">{new Dat
+              <li key={i} className
