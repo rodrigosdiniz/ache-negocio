@@ -5,8 +5,20 @@ import { CheckCircle } from 'lucide-react'
 
 const planos = [
   {
+    nome: 'Plano Gratuito',
+    preco: 'R$ 0,00',
+    priceId: null,
+    destaque: false,
+    descricao: 'Para quem quer começar sem compromisso.',
+    beneficios: [
+      'Cadastro de 1 produto',
+      'Aparece nas buscas locais',
+      'Suporte comunitário'
+    ]
+  },
+  {
     nome: 'Plano Básico',
-    preco: '$8,00/mês',
+    preco: 'R$ 8,00/mês',
     priceId: 'price_1RYaxMDGX3huEh4zJhiwZNSH',
     destaque: false,
     descricao: 'Ideal para pequenos negócios que estão começando.',
@@ -18,7 +30,7 @@ const planos = [
   },
   {
     nome: 'Plano Profissional',
-    preco: '$12,00/mês',
+    preco: 'R$ 12,00/mês',
     priceId: 'price_1RYaxNDGX3huEh4zt1pNbM9k',
     destaque: true,
     descricao: 'Recomendado para empresas com presença consolidada.',
@@ -63,10 +75,10 @@ export default function PaginaPrecos() {
     <main className="max-w-6xl mx-auto px-4 py-12">
       <h1 className="text-4xl font-bold text-center mb-10">Escolha seu plano</h1>
 
-      <div className="grid md:grid-cols-2 gap-8">
+      <div className="grid md:grid-cols-3 gap-8">
         {planos.map((plano) => (
           <div
-            key={plano.priceId}
+            key={plano.nome}
             className={`rounded-2xl border p-6 shadow-md flex flex-col justify-between transition-all ${
               plano.destaque
                 ? 'border-blue-600 bg-blue-50'
@@ -88,17 +100,26 @@ export default function PaginaPrecos() {
               </ul>
             </div>
 
-            <button
-              onClick={() => iniciarCheckout(plano.priceId)}
-              disabled={loadingId === plano.priceId}
-              className={`mt-4 w-full py-3 px-6 text-white rounded-xl font-semibold transition-all ${
-                plano.destaque
-                  ? 'bg-blue-600 hover:bg-blue-700'
-                  : 'bg-gray-700 hover:bg-gray-800'
-              } ${loadingId === plano.priceId ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              {loadingId === plano.priceId ? 'Processando...' : 'Assinar'}
-            </button>
+            {plano.priceId ? (
+              <button
+                onClick={() => iniciarCheckout(plano.priceId!)}
+                disabled={loadingId === plano.priceId}
+                className={`mt-4 w-full py-3 px-6 text-white rounded-xl font-semibold transition-all ${
+                  plano.destaque
+                    ? 'bg-blue-600 hover:bg-blue-700'
+                    : 'bg-gray-700 hover:bg-gray-800'
+                } ${loadingId === plano.priceId ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                {loadingId === plano.priceId ? 'Processando...' : 'Assinar'}
+              </button>
+            ) : (
+              <a
+                href="/cadastro"
+                className="mt-4 w-full inline-block text-center py-3 px-6 rounded-xl font-semibold text-white bg-green-600 hover:bg-green-700"
+              >
+                Criar conta grátis
+              </a>
+            )}
           </div>
         ))}
       </div>
