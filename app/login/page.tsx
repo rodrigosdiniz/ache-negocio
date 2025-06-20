@@ -1,74 +1,69 @@
+// app/login/page.tsx
 'use client'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import Toast from '@/components/Toast'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
+  const [loading, setLoading] = useState(false)
   const [mensagem, setMensagem] = useState('')
-  const [erro, setErro] = useState('')
+  const [tipo, setTipo] = useState<'success' | 'error'>('success')
   const router = useRouter()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    setErro('')
+    setLoading(true)
     setMensagem('')
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password: senha
-    })
-
+    const { error } = await supabase.auth.signInWithPassword({ email, password: senha })
     if (error) {
-      setErro('E-mail ou senha inválidos.')
-      console.error(error)
+      setMensagem('Email ou senha incorretos')
+      setTipo('error')
     } else {
-      setMensagem('Login realizado com sucesso!')
-      setTimeout(() => {
-        router.push('/dashboard') // redireciona para o painel
-      }, 1000)
+      router.push('/dashboard')
     }
+    setLoading(false)
   }
 
   return (
-    <main className="max-w-md mx-auto p-6 mt-10 bg-white shadow-lg rounded-xl">
-      <h1 className="text-2xl font-bold mb-6 text-center">Entrar na sua conta</h1>
-
-      <form onSubmit={handleLogin} className="space-y-4">
+    <main className="max-w-sm mx-auto px-4 py-10">
+      <h1 className="text-3xl font-bold text-center mb-6">Login</h1>
+      <form onSubmit={handleLogin} className="bg-white p-6 rounded-lg shadow space-y-4">
         <div>
-          <label className="block font-medium mb-1">E-mail</label>
+          <label className="block font-medium mb-1">Email</label>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-4 py-2 border rounded-md"
+            className="w-full border rounded px-3 py-2"
             required
           />
         </div>
-
         <div>
           <label className="block font-medium mb-1">Senha</label>
           <input
             type="password"
             value={senha}
             onChange={(e) => setSenha(e.target.value)}
-            className="w-full px-4 py-2 border rounded-md"
+            className="w-full border rounded px-3 py-2"
             required
           />
         </div>
-
         <button
           type="submit"
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded"
+          disabled={loading}
         >
-          Entrar
+          {loading ? 'Entrando...' : 'Entrar'}
         </button>
       </form>
-
-      {erro && <p className="mt-4 text-center text-sm text-red-600">{erro}</p>}
-      {mensagem && <p className="mt-4 text-center text-sm text-green-600">{mensagem}</p>}
+      {mensagem && (
+        <Toast message={mensagem} type={tipo} onClose={() => setMensagem('')} />
+      )}
     </main>
   )
 }
