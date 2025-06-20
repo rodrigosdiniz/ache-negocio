@@ -17,11 +17,11 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   }
 }
 
-function renderStars(nota: number) {
+function renderStars(nota: number, tamanho: string = 'w-5 h-5') {
   return Array.from({ length: 5 }, (_, i) => (
     <Star
       key={i}
-      className={`inline w-5 h-5 ${i < nota ? 'fill-yellow-400 stroke-yellow-500' : 'stroke-gray-400'}`}
+      className={`inline ${tamanho} ${i < nota ? 'fill-yellow-400 stroke-yellow-500' : 'stroke-gray-400'}`}
     />
   ))
 }
@@ -72,9 +72,57 @@ export default async function EmpresaPage({ params, searchParams }: { params: { 
       )}
 
       <h1 className="text-3xl font-bold mb-2">{empresa.nome}</h1>
-      <p className="text-sm text-gray-600 mb-4">{empresa.categoria} • {empresa.cidade}</p>
+      <p className="text-sm text-gray-600 mb-2">{empresa.categoria} • {empresa.cidade}</p>
+
+      {media && (
+        <div className="flex items-center gap-2 mb-4">
+          {renderStars(Number(media), 'w-6 h-6')}
+          <span className="text-lg font-medium">{media} ({total} avaliações)</span>
+        </div>
+      )}
 
       <p className="mb-4">{empresa.descricao}</p>
 
       <div className="mb-4 space-y-1">
-        <p><strong>Telefone:</
+        <p><strong>Telefone:</strong> {empresa.telefone}</p>
+        <p><strong>Email:</strong> {empresa.email}</p>
+        {empresa.website && (
+          <p><strong>Site:</strong> <a href={empresa.website} target="_blank" className="text-blue-600 underline">{empresa.website}</a></p>
+        )}
+        {whatsappLink && (
+          <a href={whatsappLink} target="_blank" className="inline-block mt-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Entrar no WhatsApp</a>
+        )}
+      </div>
+
+      {media && (
+        <div className="mt-6">
+          <h2 className="text-xl font-semibold mb-2">Avaliações (página {page})</h2>
+          <ul className="space-y-2">
+            {avaliacoes!.map((a, i) => (
+              <li key={i} className="border p-4 rounded">
+                <div className="flex items-center gap-2">{renderStars(a.nota)}</div>
+                <p className="mt-1">{a.comentario}</p>
+                <p className="text-sm text-gray-500 mt-1">{new Date(a.created_at).toLocaleDateString()}</p>
+              </li>
+            ))}
+          </ul>
+
+          <div className="flex justify-between mt-4">
+            {page > 1 && <Link href={`?page=${page - 1}`} className="text-blue-600">← Anterior</Link>}
+            {to + 1 < total && <Link href={`?page=${page + 1}`} className="text-blue-600 ml-auto">Próxima →</Link>}
+          </div>
+        </div>
+      )}
+
+      {user && (
+        <form action="/api/avaliar" method="POST" className="mt-8 border-t pt-6 space-y-4">
+          <h2 className="text-xl font-bold">Deixe sua avaliação</h2>
+          <input type="hidden" name="empresa_id" value={empresa.id} />
+          <input type="number" name="nota" min={1} max={5} required className="w-20 border rounded px-2 py-1" placeholder="Nota (1 a 5)" />
+          <textarea name="comentario" required placeholder="Comentário" className="w-full border rounded px-3 py-2" rows={3}></textarea>
+          <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Enviar Avaliação</button>
+        </form>
+      )}
+    </main>
+  )
+}
