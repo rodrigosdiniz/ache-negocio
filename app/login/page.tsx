@@ -4,66 +4,52 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import Toast from '@/components/Toast'
+import { useToast } from '@/context/toast-context'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [mensagem, setMensagem] = useState('')
-  const [tipo, setTipo] = useState<'success' | 'error'>('success')
   const router = useRouter()
+  const { showToast } = useToast()
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setMensagem('')
-
-    const { error } = await supabase.auth.signInWithPassword({ email, password: senha })
+  const login = async () => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password: senha
+    })
     if (error) {
-      setMensagem('Email ou senha incorretos')
-      setTipo('error')
+      showToast('Email ou senha incorretos', 'error')
     } else {
-      router.push('/dashboard')
+      showToast('Login bem-sucedido', 'success')
+      setTimeout(() => router.push('/dashboard'), 1000)
     }
-    setLoading(false)
   }
 
   return (
-    <main className="max-w-sm mx-auto px-4 py-10">
+    <main className="max-w-md mx-auto py-10 px-4">
       <h1 className="text-3xl font-bold text-center mb-6">Login</h1>
-      <form onSubmit={handleLogin} className="bg-white p-6 rounded-lg shadow space-y-4">
-        <div>
-          <label className="block font-medium mb-1">Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full border rounded px-3 py-2"
-            required
-          />
-        </div>
-        <div>
-          <label className="block font-medium mb-1">Senha</label>
-          <input
-            type="password"
-            value={senha}
-            onChange={(e) => setSenha(e.target.value)}
-            className="w-full border rounded px-3 py-2"
-            required
-          />
-        </div>
+      <div className="space-y-4">
+        <input
+          type="email"
+          placeholder="Seu email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full px-3 py-2 border rounded"
+        />
+        <input
+          type="password"
+          placeholder="Sua senha"
+          value={senha}
+          onChange={(e) => setSenha(e.target.value)}
+          className="w-full px-3 py-2 border rounded"
+        />
         <button
-          type="submit"
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded"
-          disabled={loading}
+          onClick={login}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded"
         >
-          {loading ? 'Entrando...' : 'Entrar'}
+          Entrar
         </button>
-      </form>
-      {mensagem && (
-        <Toast message={mensagem} type={tipo} onClose={() => setMensagem('')} />
-      )}
+      </div>
     </main>
   )
 }
