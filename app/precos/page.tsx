@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { CheckCircle } from 'lucide-react'
+import { CheckCircle, Star } from 'lucide-react'
 
 const planos = [
   {
@@ -79,12 +79,20 @@ export default function PaginaPrecos() {
         {planos.map((plano) => (
           <div
             key={plano.nome}
-            className={`rounded-2xl border p-6 shadow-md flex flex-col justify-between transition-all ${
+            className={`relative rounded-2xl border p-6 shadow-md flex flex-col justify-between transition-all ${
               plano.destaque
                 ? 'border-blue-600 bg-blue-50'
                 : 'bg-white'
             }`}
           >
+            {/* Selo "Mais vendido" */}
+            {plano.destaque && (
+              <div className="absolute top-0 right-0 bg-yellow-400 text-yellow-900 text-xs font-semibold px-3 py-1 rounded-bl-xl flex items-center gap-1 shadow-md">
+                <Star className="w-4 h-4 fill-yellow-500 text-yellow-900 animate-pulse" />
+                Mais vendido
+              </div>
+            )}
+
             <div>
               <h2 className="text-2xl font-bold mb-2">{plano.nome}</h2>
               <p className="text-gray-700 mb-4">{plano.descricao}</p>
@@ -100,6 +108,7 @@ export default function PaginaPrecos() {
               </ul>
             </div>
 
+            {/* Botão de ação */}
             {plano.priceId ? (
               <button
                 onClick={() => iniciarCheckout(plano.priceId!)}
