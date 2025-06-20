@@ -26,29 +26,30 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   }, [pathname, supabase])
 
   return (
-    <div>
-      <header className="bg-gray-100 border-b px-6 py-4 flex justify-between items-center sticky top-0 z-50">
-        <div className="text-lg font-semibold text-gray-800">Painel do Usuário</div>
-        {user && (
-          <div className="flex items-center gap-4">
-            <div className="relative group">
-              <button className="text-sm text-gray-700 font-medium focus:outline-none">
-                {user.user_metadata?.nome || user.email}
-              </button>
-              <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg hidden group-hover:block z-10">
-                <Link href="/dashboard/perfil" className="block px-4 py-2 text-gray-800 hover:bg-gray-100">
-                  Meu perfil
-                </Link>
-                <div className="px-4 py-2">
-                  <LogoutButton />
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </header>
+    <div className="flex min-h-screen">
+      {/* Menu lateral fixo */}
+      <aside className="w-64 bg-gray-900 text-white flex flex-col py-6 px-4 space-y-4 sticky top-0 h-screen">
+        <h2 className="text-xl font-semibold mb-6">Ache Negócio</h2>
+        <Link
+          href="/dashboard"
+          className="hover:bg-gray-700 rounded px-3 py-2"
+        >
+          Início
+        </Link>
+        <Link
+          href="/dashboard/perfil"
+          className="hover:bg-gray-700 rounded px-3 py-2"
+        >
+          Perfil
+        </Link>
+        <div className="mt-auto">
+          <LogoutButton />
+        </div>
+      </aside>
 
-      <main>{children}</main>
+      <main className="flex-1 bg-gray-50 px-6 py-6">
+        {children}
+      </main>
     </div>
   )
 }
