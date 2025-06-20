@@ -30,5 +30,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: insertError.message }, { status: 500 })
   }
 
-  return NextResponse.redirect(`/empresa/${empresa_id}`, { status: 303 })
+  const response = NextResponse.redirect(`/empresa/${empresa_id}`, { status: 303 })
+  response.cookies.set('toast', 'Avaliação enviada com sucesso!', { path: '/', maxAge: 5 })
+  return response
 }
