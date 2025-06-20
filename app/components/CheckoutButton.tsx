@@ -1,44 +1,48 @@
-// components/CheckoutButton.tsx
-'use client';
+'use client'
 
-import { loadStripe } from '@stripe/stripe-js';
-import { useState } from 'react';
+import { useState } from 'react'
 
-const stripePromise = loadStripe(
-  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || ''
-);
+interface CheckoutButtonProps {
+  priceId: string
+}
 
-export default function CheckoutButton({ planId }: { planId: string }) {
-  const [loading, setLoading] = useState(false);
+export default function CheckoutButton({ priceId }: CheckoutButtonProps) {
+  const [loading, setLoading] = useState(false)
 
   const handleCheckout = async () => {
-    setLoading(true);
+    setLoading(true)
 
-    const res = await fetch('/api/checkout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ planId }),
-    });
+    try {
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ priceId })
+      })
 
-    const data = await res.json();
+      const data = await res.json()
 
-    if (data.sessionId) {
-      const stripe = await stripePromise;
-      await stripe?.redirectToCheckout({ sessionId: data.sessionId });
-    } else {
-      alert('Erro ao iniciar checkout');
+      if (data?.url) {
+        window.location.href = data.url // redireciona para o Stripe Checkout
+      } else {
+        alert('Erro ao criar sessão de checkout.')
+      }
+    } catch (err) {
+      console.error('Erro ao redirecionar:', err)
+      alert('Erro inesperado.')
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false);
-  };
+  }
 
   return (
     <button
       onClick={handleCheckout}
       disabled={loading}
-      className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+      className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
     >
-      {loading ? 'Processando...' : 'Assinar Plano'}
+      {loading ? 'Redirecionando...' : 'Assinar agora'}
     </button>
-  );
+  )
 }
