@@ -22,20 +22,18 @@ export default function DashboardPerfil() {
   const [empresas, setEmpresas] = useState<Empresa[]>([])
   const [plano, setPlano] = useState<Plano | null>(null)
   const [loading, setLoading] = useState(true)
+  const [excluindoId, setExcluindoId] = useState<string | null>(null)
 
   useEffect(() => {
-    const carregar = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return setLoading(false)
+    const carregarDados = async () => {
+      const { data: { user }, error } = await supabase.auth.getUser()
+      if (error || !user) return setLoading(false)
 
       const [empresasRes, planoRes] = await Promise.all([
-        supabase
-          .from('empresas')
+        supabase.from('empresas')
           .select('id, nome, cidade, categoria, nota_media')
           .eq('user_id', user.id),
-
-        supabase
-          .from('usuarios_planos')
+        supabase.from('usuarios_planos')
           .select('plano, atualizado_em')
           .eq('user_id', user.id)
           .single()
@@ -43,15 +41,18 @@ export default function DashboardPerfil() {
 
       if (empresasRes.data) setEmpresas(empresasRes.data)
       if (planoRes.data) setPlano(planoRes.data)
+
       setLoading(false)
     }
 
-    carregar()
+    carregarDados()
   }, [])
 
   const excluirEmpresa = async (id: string, nome: string) => {
     const confirmar = confirm(`Deseja realmente excluir a empresa "${nome}"? Essa ação não poderá ser desfeita.`)
     if (!confirmar) return
+
+    setExcluindoId(id)
 
     const res = await fetch('/api/empresa/excluir', {
       method: 'POST',
@@ -59,11 +60,14 @@ export default function DashboardPerfil() {
       body: JSON.stringify({ id }),
     })
 
+    setExcluindoId(null)
+
     if (res.ok) {
-      alert('Empresa excluída com sucesso.')
-      setEmpresas((empresas) => empresas.filter((e) => e.id !== id))
+      alert(`Empresa "${nome}" excluída com sucesso.`)
+      setEmpresas(empresas => empresas.filter(e => e.id !== id))
     } else {
-      alert('Erro ao excluir a empresa.')
+      const erro = await res.json()
+      alert(`Erro ao excluir a empresa: ${erro?.message || 'Erro desconhecido.'}`)
     }
   }
 
@@ -118,23 +122,4 @@ export default function DashboardPerfil() {
                   <div className="flex flex-col items-end gap-2">
                     <Link
                       href={`/painel/editar/${empresa.id}`}
-                      className="text-sm text-blue-600 hover:underline flex items-center gap-1"
-                    >
-                      <Pencil className="w-4 h-4" /> Editar
-                    </Link>
-                    <button
-                      onClick={() => excluirEmpresa(empresa.id, empresa.nome)}
-                      className="text-sm text-red-600 hover:underline flex items-center gap-1"
-                    >
-                      <Trash2 className="w-4 h-4" /> Excluir
-                    </button>
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-    </main>
-  )
-}
+                      className="text-sm text-blue-600 hover:underline flex items-center ga
