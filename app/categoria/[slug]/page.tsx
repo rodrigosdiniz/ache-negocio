@@ -2,122 +2,118 @@
 
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { useParams } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 import EmpresaCard from '@/components/EmpresaCard'
-import { supabase } from '@/lib/supabase'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Slider } from '@/components/ui/slider'
+import { Button } from '@/components/ui/button'
 
-export default function CategoriaSlugPage() {
-  const { slug } = useParams()
+interface Empresa {
+  id: string
+  nome: string
+  cidade: string
+  categoria: string
+  nota_media: number | null
+  imagem_url: string | null
+}
+
+export default function EmpresasPorCategoria({ params }: { params: { slug: string } }) {
+  const supabase = createClient()
   const searchParams = useSearchParams()
-  const cidadeFiltro = searchParams.get('cidade') || ''
-  const notaMinimaFiltro = Number(searchParams.get('nota') || '0')
-  const pagina = Number(searchParams.get('pagina') || '1')
-
-  const [empresas, setEmpresas] = useState<any[]>([])
-  const [cidades, setCidades] = useState<string[]>([])
+  const [empresas, setEmpresas] = useState<Empresa[]>([])
+  const [cidade, setCidade] = useState('')
+  const [notaMinima, setNotaMinima] = useState(0)
+  const [pagina, setPagina] = useState(1)
   const [totalPaginas, setTotalPaginas] = useState(1)
-  const limite = 12
+  const [carregando, setCarregando] = useState(false)
+  const itensPorPagina = 6
 
   useEffect(() => {
-    const carregarEmpresas = async () => {
-      let query = supabase
+    const buscarEmpresas = async () => {
+      setCarregando(true)
+
+      const query = supabase
         .from('empresas')
         .select('*', { count: 'exact' })
-        .ilike('categoria', `%${slug}%`)
+        .ilike('categoria', `%${params.slug}%`)
+        .gte('nota_media', notaMinima)
 
-      if (cidadeFiltro) query = query.ilike('cidade', `%${cidadeFiltro}%`)
-      if (notaMinimaFiltro) query = query.gte('nota_media', notaMinimaFiltro)
+      if (cidade) {
+        query.ilike('cidade', `%${cidade}%`)
+      }
+
+      query.order('nome', { ascending: true })
+        .range((pagina - 1) * itensPorPagina, pagina * itensPorPagina - 1)
 
       const { data, count } = await query
-        .range((pagina - 1) * limite, pagina * limite - 1)
 
       if (data) setEmpresas(data)
-      if (count) setTotalPaginas(Math.ceil(count / limite))
+      if (count) setTotalPaginas(Math.ceil(count / itensPorPagina))
+      setCarregando(false)
     }
 
-    const carregarCidades = async () => {
-      const { data } = await supabase
-        .from('empresas')
-        .select('cidade')
-        .ilike('categoria', `%${slug}%`)
-
-      if (data) {
-        const unicas = [...new Set(data.map(e => e.cidade))]
-        setCidades(unicas.sort())
-      }
-    }
-
-    carregarEmpresas()
-    carregarCidades()
-  }, [slug, cidadeFiltro, notaMinimaFiltro, pagina])
+    buscarEmpresas()
+  }, [params.slug, cidade, notaMinima, pagina])
 
   return (
-    <main className="max-w-7xl mx-auto px-4 py-10">
-      <h1 className="text-3xl font-bold mb-6 capitalize">Empresas de {slug}</h1>
+    <main className="max-w-6xl mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold capitalize mb-4">Categoria: {params.slug.replace('-', ' ')}</h1>
 
-      <form className="mb-6 flex flex-wrap gap-4">
-        <select
-          name="cidade"
-          defaultValue={cidadeFiltro}
-          className="border p-2 rounded"
-          onChange={(e) => {
-            const url = new URL(window.location.href)
-            if (e.target.value) url.searchParams.set('cidade', e.target.value)
-            else url.searchParams.delete('cidade')
-            window.location.href = url.toString()
-          }}
-        >
-          <option value="">Todas as cidades</option>
-          {cidades.map((cidade) => (
-            <option key={cidade} value={cidade}>{cidade}</option>
-          ))}
-        </select>
+      <div className="grid md:grid-cols-4 gap-6">
+        <aside className="md:col-span-1 space-y-4">
+          <div>
+            <Label htmlFor="cidade">Cidade</Label>
+            <Input id="cidade" value={cidade} onChange={(e) => setCidade(e.target.value)} placeholder="Ex: Rio de Janeiro" />
+          </div>
 
-        <select
-          name="nota"
-          defaultValue={notaMinimaFiltro.toString()}
-          className="border p-2 rounded"
-          onChange={(e) => {
-            const url = new URL(window.location.href)
-            if (e.target.value) url.searchParams.set('nota', e.target.value)
-            else url.searchParams.delete('nota')
-            window.location.href = url.toString()
-          }}
-        >
-          <option value="0">Todas as notas</option>
-          <option value="3">Nota mínima 3</option>
-          <option value="4">Nota mínima 4</option>
-          <option value="4.5">Nota mínima 4.5</option>
-        </select>
-      </form>
+          <div>
+            <Label htmlFor="nota">Nota mínima</Label>
+            <Slider
+              defaultValue={[notaMinima]}
+              min={0}
+              max={5}
+              step={0.5}
+              onValueChange={([value]) => setNotaMinima(value)}
+            />
+            <span className="text-sm text-gray-600">{notaMinima.toFixed(1)} estrelas ou mais</span>
+          </div>
 
-      {empresas.length === 0 ? (
-        <p className="text-gray-600">Nenhuma empresa encontrada.</p>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {empresas.map((empresa) => (
-            <EmpresaCard key={empresa.id} empresa={empresa} />
-          ))}
-        </div>
-      )}
+          <Button variant="outline" onClick={() => {
+            setCidade('')
+            setNotaMinima(0)
+            setPagina(1)
+          }}>Limpar Filtros</Button>
+        </aside>
 
-      {totalPaginas > 1 && (
-        <div className="flex justify-center mt-10 gap-2 flex-wrap">
-          {Array.from({ length: totalPaginas }, (_, i) => (
-            <button
-              key={i + 1}
-              onClick={() => {
-                const url = new URL(window.location.href)
-                url.searchParams.set('pagina', String(i + 1))
-                window.location.href = url.toString()
-              }}
-              className={`px-4 py-2 rounded border ${pagina === i + 1 ? 'bg-blue-600 text-white' : 'bg-white text-blue-600'}`}
-            >
-              {i + 1}
-            </button>
-          ))}
-        </div>
-      )}
+        <section className="md:col-span-3 space-y-6">
+          {carregando ? (
+            <p className="text-gray-500">Carregando empresas...</p>
+          ) : empresas.length > 0 ? (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {empresas.map((empresa) => (
+                <EmpresaCard key={empresa.id} empresa={empresa} />
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500">Nenhuma empresa encontrada.</p>
+          )}
+
+          {totalPaginas > 1 && (
+            <div className="flex justify-center gap-2 mt-6">
+              {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((n) => (
+                <Button
+                  key={n}
+                  variant={n === pagina ? 'default' : 'outline'}
+                  onClick={() => setPagina(n)}
+                >
+                  {n}
+                </Button>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
     </main>
   )
 }
