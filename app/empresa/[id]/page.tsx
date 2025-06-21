@@ -1,70 +1,105 @@
-// app/empresa/[id]/page.tsx
+'use client'
 
-import { supabase } from '@/lib/supabase'
-import { createClient } from '@/lib/supabase/server'
-import { cookies } from 'next/headers'
-import { notFound } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { AvaliacaoCard } from '@/components/AvaliacaoCard'
-import { getSession } from '@supabase/auth-helpers-nextjs'
+import { ModalAvaliacao } from '@/components/ModalAvaliacao'
 
-interface PageProps {
-  params: { id: string }
-}
+export default function EmpresaPage({ params }: { params: { id: string } }) {
+  const supabase = createClientComponentClient()
+  const router = useRouter()
+  const [empresa, setEmpresa] = useState<any>(null)
+  const [avaliacoes, setAvaliacoes] = useState<any[]>([])
+  const [session, setSession] = useState<any>(null)
+  const [showModal, setShowModal] = useState(false)
 
-export default async function EmpresaPage({ params }: PageProps) {
-  const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
+  useEffect(() => {
+    const carregarDados = async () => {
+      const { data: { session: sess } } = await supabase.auth.getSession()
+      setSession(sess)
 
-  // Busca os dados da empresa
-  const { data: empresa, error: erroEmpresa } = await supabase
-    .from('empresas')
-    .select('*')
-    .eq('id', params.id)
-    .single()
+      const { data: empresaData } = await supabase
+        .from('empresas')
+        .select('*')
+        .eq('id', params.id)
+        .single()
 
-  if (!empresa) return notFound()
+      setEmpresa(empresaData)
 
-  // Busca o usuário logado
-  const session = await getSession()
+      const { data: avaliacoesData } = await supabase
+        .from('avaliacoes')
+        .select('*')
+        .eq('empresa_id', params.id)
+        .order('created_at', { ascending: false })
+
+      setAvaliacoes(avaliacoesData)
+    }
+
+    carregarDados()
+  }, [params.id, showModal])
+
+  if (!empresa) return <div className="p-8">Carregando empresa...</div>
+
   const userId = session?.user?.id
+  const isDono = empresa.user_id === userId
+  const avaliacaoDoUsuario = avaliacoes.find((a) => a.user_id === userId)
 
-  // Busca as avaliações dessa empresa
-  const { data: avaliacoes, error: erroAvaliacoes } = await supabase
-    .from('avaliacoes')
-    .select('*')
-    .eq('empresa_id', params.id)
-    .order('created_at', { ascending: false })
+  const handleExcluir = async (id: string) => {
+    const confirmar = confirm('Deseja excluir sua avaliação?')
+    if (!confirmar) return
+
+    await supabase.from('avaliacoes').delete().eq('id', id)
+    router.refresh()
+  }
 
   return (
     <div className="max-w-4xl mx-auto py-8 px-4">
-      <h1 className="text-3xl font-bold mb-4">{empresa.nome}</h1>
+      <h1 className="text-3xl font-bold mb-2">{empresa.nome}</h1>
       <p className="text-gray-600 mb-6">{empresa.descricao}</p>
 
+      {/* Botão de Avaliação */}
+      {userId && !isDono && (
+        <div className="mb-6">
+          <button
+            onClick={() => setShowModal(true)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          >
+            {avaliacaoDoUsuario ? 'Editar sua Avaliação' : 'Avaliar Empresa'}
+          </button>
+        </div>
+      )}
+
       {/* Avaliações */}
-      <section className="mt-10">
+      <section>
         <h2 className="text-2xl font-semibold mb-4">Avaliações</h2>
 
-        {avaliacoes?.length === 0 && (
+        {avaliacoes.length === 0 && (
           <p className="text-gray-500">Ainda não há avaliações para esta empresa.</p>
         )}
 
         <div className="space-y-4">
-          {avaliacoes?.map((avaliacao) => (
+          {avaliacoes.map((avaliacao) => (
             <AvaliacaoCard
               key={avaliacao.id}
               avaliacao={avaliacao}
               isAutor={avaliacao.user_id === userId}
-              isDono={empresa.user_id === userId}
-              onEditar={() => {
-                // Lógica para abrir modal ou redirecionar para editar
-              }}
-              onExcluir={() => {
-                // Lógica para confirmar e excluir avaliação
-              }}
+              isDono={isDono}
+              onEditar={() => setShowModal(true)}
+              onExcluir={() => handleExcluir(avaliacao.id)}
             />
           ))}
         </div>
       </section>
+
+      {/* Modal de Avaliação */}
+      <ModalAvaliacao
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        empresaId={params.id}
+        avaliacaoExistente={avaliacaoDoUsuario}
+        onSalvar={() => router.refresh()}
+      />
     </div>
   )
 }
