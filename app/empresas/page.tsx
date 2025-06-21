@@ -1,159 +1,168 @@
-// Novo arquivo: app/empresas/page.tsx
 'use client'
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { Star } from 'lucide-react'
 
+interface Empresa {
+  id: string
+  nome: string
+  cidade: string
+  estado: string
+  categoria: string
+  preco_medio: number | null
+  nota_media: number | null
+  latitude?: number
+  longitude?: number
+}
+
+const categorias = ['Restaurante', 'Mercado', 'Clínica', 'Oficina', 'Hotel']
+const estados = ['RJ', 'SP', 'MG', 'RS', 'BA']
+const precos = [
+  { label: 'Até R$ 50', min: 0, max: 50 },
+  { label: 'R$ 50 a R$ 100', min: 50, max: 100 },
+  { label: 'Acima de R$ 100', min: 100, max: Infinity }
+]
+
 export default function EmpresasPage() {
-  const [empresas, setEmpresas] = useState<any[]>([])
-  const [nomeBusca, setNomeBusca] = useState('')
-  const [notaMinima, setNotaMinima] = useState<number>(0)
-  const [categoriaSelecionada, setCategoriaSelecionada] = useState('')
-  const [cidadeSelecionada, setCidadeSelecionada] = useState('')
+  const [empresas, setEmpresas] = useState<Empresa[]>([])
+  const [loading, setLoading] = useState(true)
+  const [filtroEstado, setFiltroEstado] = useState('')
+  const [filtroCategoria, setFiltroCategoria] = useState('')
+  const [filtroPreco, setFiltroPreco] = useState('')
   const [pagina, setPagina] = useState(1)
-  const [ordenacao, setOrdenacao] = useState('mais_recentes')
-  const [categorias, setCategorias] = useState<string[]>([])
-  const [cidades, setCidades] = useState<string[]>([])
-  const [total, setTotal] = useState(0)
-  const porPagina = 6
+  const porPagina = 10
+
+  const router = useRouter()
+  const params = useSearchParams()
 
   useEffect(() => {
-    const carregarDados = async () => {
-      const { data } = await supabase.from('empresas').select()
-      const categoriasUnicas = [...new Set(data?.map((e) => e.categoria))]
-      const cidadesUnicas = [...new Set(data?.map((e) => e.cidade))]
-      setCategorias(categoriasUnicas)
-      setCidades(cidadesUnicas)
-    }
-    carregarDados()
-  }, [])
+    const estado = params.get('estado') || ''
+    const categoria = params.get('categoria') || ''
+    const preco = params.get('preco') || ''
+    const paginaAtual = parseInt(params.get('pagina') || '1')
+    setFiltroEstado(estado)
+    setFiltroCategoria(categoria)
+    setFiltroPreco(preco)
+    setPagina(paginaAtual)
+  }, [params])
 
   useEffect(() => {
-    const buscar = async () => {
-      let query = supabase.from('empresas').select('*', { count: 'exact' })
+    const carregar = async () => {
+      let query = supabase
+        .from('empresas')
+        .select('*')
+        .order('nota_media', { ascending: false })
+        .range((pagina - 1) * porPagina, pagina * porPagina - 1)
 
-      if (nomeBusca) query = query.ilike('nome', `%${nomeBusca}%`)
-      if (notaMinima > 0) query = query.gte('nota_media', notaMinima)
-      if (categoriaSelecionada) query = query.eq('categoria', categoriaSelecionada)
-      if (cidadeSelecionada) query = query.eq('cidade', cidadeSelecionada)
+      if (filtroEstado) query = query.eq('estado', filtroEstado)
+      if (filtroCategoria) query = query.eq('categoria', filtroCategoria)
+      if (filtroPreco) {
+        const faixa = precos.find(p => p.label === filtroPreco)
+        if (faixa) query = query.gte('preco_medio', faixa.min).lte('preco_medio', faixa.max)
+      }
 
-      if (ordenacao === 'mais_recentes') query = query.order('criado_em', { ascending: false })
-      if (ordenacao === 'melhores') query = query.order('nota_media', { ascending: false })
-
-      query = query.range((pagina - 1) * porPagina, pagina * porPagina - 1)
-
-      const { data, count } = await query
+      const { data } = await query
       if (data) setEmpresas(data)
-      if (count !== null) setTotal(count)
+      setLoading(false)
     }
-    buscar()
-  }, [nomeBusca, notaMinima, categoriaSelecionada, cidadeSelecionada, pagina, ordenacao])
+    carregar()
+  }, [filtroEstado, filtroCategoria, filtroPreco, pagina])
 
-  const limparFiltros = () => {
-    setNomeBusca('')
-    setNotaMinima(0)
-    setCategoriaSelecionada('')
-    setCidadeSelecionada('')
-    setOrdenacao('mais_recentes')
+  const atualizarFiltros = (estado: string, categoria: string, preco: string, novaPagina: number = 1) => {
+    const query = new URLSearchParams()
+    if (estado) query.set('estado', estado)
+    if (categoria) query.set('categoria', categoria)
+    if (preco) query.set('preco', preco)
+    if (novaPagina > 1) query.set('pagina', novaPagina.toString())
+    router.push(`/empresas?${query.toString()}`)
   }
 
-  const totalPaginas = Math.ceil(total / porPagina)
+  if (loading) {
+    return <p className="text-center text-sm text-gray-600 py-10">Carregando empresas...</p>
+  }
 
   return (
     <main className="max-w-6xl mx-auto px-4 py-10">
-      <h1 className="text-3xl font-bold mb-6">Empresas Cadastradas</h1>
+      <h1 className="text-3xl font-bold mb-6">Empresas</h1>
 
-      <section className="mb-8 grid md:grid-cols-5 gap-4">
-        <input
-          value={nomeBusca}
-          onChange={(e) => setNomeBusca(e.target.value)}
-          placeholder="Buscar por nome"
-          className="border p-2 rounded col-span-2"
-        />
+      <div className="flex flex-wrap gap-4 mb-8">
         <select
-          value={categoriaSelecionada}
-          onChange={(e) => setCategoriaSelecionada(e.target.value)}
+          value={filtroEstado}
+          onChange={(e) => atualizarFiltros(e.target.value, filtroCategoria, filtroPreco)}
           className="border p-2 rounded"
         >
-          <option value="">Todas as categorias</option>
-          {categorias.map((c) => (
-            <option key={c} value={c}>{c}</option>
-          ))}
+          <option value="">Estado</option>
+          {estados.map((e) => <option key={e}>{e}</option>)}
         </select>
-        <select
-          value={cidadeSelecionada}
-          onChange={(e) => setCidadeSelecionada(e.target.value)}
-          className="border p-2 rounded"
-        >
-          <option value="">Todas as cidades</option>
-          {cidades.map((c) => (
-            <option key={c} value={c}>{c}</option>
-          ))}
-        </select>
-        <select
-          value={ordenacao}
-          onChange={(e) => setOrdenacao(e.target.value)}
-          className="border p-2 rounded"
-        >
-          <option value="mais_recentes">Mais recentes</option>
-          <option value="melhores">Melhores avaliadas</option>
-        </select>
-      </section>
 
-      <section className="mb-6 flex gap-4 items-center">
-        <label className="text-sm">Nota mínima:</label>
-        <input
-          type="range"
-          min={0}
-          max={5}
-          step={0.5}
-          value={notaMinima}
-          onChange={(e) => setNotaMinima(Number(e.target.value))}
-        />
-        <span>{notaMinima} ⭐</span>
+        <select
+          value={filtroCategoria}
+          onChange={(e) => atualizarFiltros(filtroEstado, e.target.value, filtroPreco)}
+          className="border p-2 rounded"
+        >
+          <option value="">Categoria</option>
+          {categorias.map((c) => <option key={c}>{c}</option>)}
+        </select>
+
+        <select
+          value={filtroPreco}
+          onChange={(e) => atualizarFiltros(filtroEstado, filtroCategoria, e.target.value)}
+          className="border p-2 rounded"
+        >
+          <option value="">Faixa de preço</option>
+          {precos.map((p) => <option key={p.label}>{p.label}</option>)}
+        </select>
+
         <button
-          onClick={limparFiltros}
-          className="ml-auto text-sm text-gray-600 underline hover:text-black"
+          className="ml-auto bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+          onClick={() => router.push(`/mapa?estado=${filtroEstado}&categoria=${filtroCategoria}&preco=${filtroPreco}`)}
         >
-          Limpar filtros
+          Ver no Mapa
         </button>
-      </section>
+      </div>
 
-      <p className="text-sm text-gray-500 mb-4">
-        Exibindo {empresas.length} de {total} resultados
-      </p>
-
-      <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {empresas.map((empresa) => (
-          <li key={empresa.id} className="border p-4 rounded shadow">
-            <Link href={`/empresa/${empresa.id}`} className="text-lg font-semibold text-blue-600 hover:underline">
-              {empresa.nome}
-            </Link>
-            <p className="text-sm text-gray-600">{empresa.cidade} • {empresa.categoria}</p>
-            {empresa.nota_media !== null && (
-              <p className="flex items-center gap-1 text-sm text-yellow-600 mt-1">
-                <Star className="w-4 h-4 fill-yellow-500" /> {empresa.nota_media.toFixed(1)} / 5
-              </p>
-            )}
-          </li>
-        ))}
-      </ul>
-
-      {totalPaginas > 1 && (
-        <div className="flex justify-center mt-10 gap-2">
-          {Array.from({ length: totalPaginas }).map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setPagina(i + 1)}
-              className={`px-3 py-1 rounded border ${pagina === i + 1 ? 'bg-blue-600 text-white' : 'bg-white text-gray-800'}`}
-            >
-              {i + 1}
-            </button>
+      {empresas.length === 0 ? (
+        <p className="text-sm text-gray-600">Nenhuma empresa encontrada.</p>
+      ) : (
+        <ul className="space-y-4">
+          {empresas.map((empresa) => (
+            <li key={empresa.id} className="border p-4 rounded">
+              <Link href={`/empresa/${empresa.id}`} className="text-blue-600 font-semibold hover:underline">
+                {empresa.nome}
+              </Link>
+              <p className="text-sm text-gray-600">{empresa.cidade} • {empresa.estado} • {empresa.categoria}</p>
+              {empresa.nota_media !== null && (
+                <p className="text-sm text-yellow-600 flex items-center gap-1 mt-1">
+                  <Star className="w-4 h-4 fill-yellow-500" /> {empresa.nota_media.toFixed(1)} / 5
+                </p>
+              )}
+              {empresa.preco_medio !== null && (
+                <p className="text-sm text-gray-500 mt-1">Preço médio: R$ {empresa.preco_medio.toFixed(2)}</p>
+              )}
+            </li>
           ))}
-        </div>
+        </ul>
       )}
+
+      <div className="flex justify-center mt-8 gap-2">
+        {pagina > 1 && (
+          <button
+            onClick={() => atualizarFiltros(filtroEstado, filtroCategoria, filtroPreco, pagina - 1)}
+            className="px-4 py-2 border rounded hover:bg-gray-100"
+          >
+            Anterior
+          </button>
+        )}
+        <button
+          onClick={() => atualizarFiltros(filtroEstado, filtroCategoria, filtroPreco, pagina + 1)}
+          className="px-4 py-2 border rounded hover:bg-gray-100"
+        >
+          Próxima
+        </button>
+      </div>
     </main>
   )
 }
