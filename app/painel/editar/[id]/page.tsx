@@ -1,95 +1,113 @@
-"use client"
+'use client'
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { useParams } from 'next/navigation'
+import Image from 'next/image'
 
-export default function EditarEmpresaPage() {
+interface Empresa {
+  id: string
+  nome: string
+  cidade: string
+  categoria: string
+  descricao: string
+  telefone: string
+  email: string
+  website: string
+  imagem_url: string | null
+}
+
+export default function EditarEmpresaPage({ params }: { params: { id: string } }) {
+  const [empresa, setEmpresa] = useState<Empresa | null>(null)
+  const [novaImagem, setNovaImagem] = useState<File | null>(null)
+  const [previewImagem, setPreviewImagem] = useState<string>('')
   const router = useRouter()
-  const params = useParams()
-  const empresaId = params?.id as string
-
-  const [form, setForm] = useState({
-    nome: '',
-    cidade: '',
-    categoria: '',
-    telefone: '',
-    email: '',
-    website: '',
-    descricao: ''
-  })
-  const [loading, setLoading] = useState(true)
-  const [erro, setErro] = useState('')
 
   useEffect(() => {
-    const carregar = async () => {
-      const { data, error } = await supabase
-        .from('empresas')
-        .select('*')
-        .eq('id', empresaId)
-        .single()
-
-      if (error || !data) {
-        setErro('Empresa não encontrada.')
-        setLoading(false)
-        return
-      }
-
-      setForm({
-        nome: data.nome || '',
-        cidade: data.cidade || '',
-        categoria: data.categoria || '',
-        telefone: data.telefone || '',
-        email: data.email || '',
-        website: data.website || '',
-        descricao: data.descricao || ''
-      })
-
-      setLoading(false)
+    const carregarEmpresa = async () => {
+      const { data } = await supabase.from('empresas').select('*').eq('id', params.id).single()
+      if (data) setEmpresa(data)
     }
-
-    if (empresaId) carregar()
-  }, [empresaId])
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setForm(prev => ({ ...prev, [name]: value }))
-  }
+    carregarEmpresa()
+  }, [params.id])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setErro('')
+    if (!empresa) return
 
-    const { error } = await supabase
-      .from('empresas')
-      .update(form)
-      .eq('id', empresaId)
+    let imagem_url = empresa.imagem_url
+
+    if (novaImagem) {
+      const fileExt = novaImagem.name.split('.').pop()
+      const fileName = `${empresa.id}.${fileExt}`
+      const filePath = `empresas/${fileName}`
+
+      const { error: uploadError } = await supabase.storage.from('public').upload(filePath, novaImagem, {
+        upsert: true
+      })
+
+      if (uploadError) {
+        alert('Erro ao fazer upload da imagem.')
+        return
+      }
+
+      const { data: publicUrl } = supabase.storage.from('public').getPublicUrl(filePath)
+      imagem_url = publicUrl.publicUrl
+    }
+
+    const { error } = await supabase.from('empresas').update({ ...empresa, imagem_url }).eq('id', empresa.id)
 
     if (error) {
-      setErro('Erro ao salvar as alterações.')
+      alert('Erro ao atualizar os dados.')
     } else {
       alert('Empresa atualizada com sucesso.')
       router.push('/painel')
     }
   }
 
-  if (loading) return <p className="text-center py-10 text-gray-500">Carregando...</p>
-  if (erro) return <p className="text-center py-10 text-red-600">{erro}</p>
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (!empresa) return
+    setEmpresa({ ...empresa, [e.target.name]: e.target.value })
+  }
+
+  const handleImagemChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null
+    if (file) {
+      setNovaImagem(file)
+      setPreviewImagem(URL.createObjectURL(file))
+    }
+  }
+
+  if (!empresa) return <p className="text-center py-10">Carregando...</p>
 
   return (
-    <main className="max-w-3xl mx-auto px-4 py-10">
+    <main className="max-w-2xl mx-auto px-4 py-10">
       <h1 className="text-2xl font-bold mb-6">Editar Empresa</h1>
-
       <form onSubmit={handleSubmit} className="space-y-4">
-        <input name="nome" value={form.nome} onChange={handleChange} required className="w-full border rounded p-2" placeholder="Nome da empresa" />
-        <input name="cidade" value={form.cidade} onChange={handleChange} required className="w-full border rounded p-2" placeholder="Cidade" />
-        <input name="categoria" value={form.categoria} onChange={handleChange} required className="w-full border rounded p-2" placeholder="Categoria" />
-        <input name="telefone" value={form.telefone} onChange={handleChange} className="w-full border rounded p-2" placeholder="Telefone" />
-        <input name="email" type="email" value={form.email} onChange={handleChange} className="w-full border rounded p-2" placeholder="Email" />
-        <input name="website" value={form.website} onChange={handleChange} className="w-full border rounded p-2" placeholder="Site (opcional)" />
-        <textarea name="descricao" value={form.descricao} onChange={handleChange} className="w-full border rounded p-2" placeholder="Descrição" rows={4} />
-        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Salvar Alterações</button>
+        <input name="nome" value={empresa.nome} onChange={handleInputChange} className="w-full border p-2 rounded" placeholder="Nome" />
+        <input name="cidade" value={empresa.cidade} onChange={handleInputChange} className="w-full border p-2 rounded" placeholder="Cidade" />
+        <input name="categoria" value={empresa.categoria} onChange={handleInputChange} className="w-full border p-2 rounded" placeholder="Categoria" />
+        <textarea name="descricao" value={empresa.descricao} onChange={handleInputChange} className="w-full border p-2 rounded" placeholder="Descrição" />
+        <input name="telefone" value={empresa.telefone} onChange={handleInputChange} className="w-full border p-2 rounded" placeholder="Telefone" />
+        <input name="email" value={empresa.email} onChange={handleInputChange} className="w-full border p-2 rounded" placeholder="Email" />
+        <input name="website" value={empresa.website} onChange={handleInputChange} className="w-full border p-2 rounded" placeholder="Website" />
+
+        {empresa.imagem_url && !previewImagem && (
+          <Image src={empresa.imagem_url} alt="Imagem atual" width={300} height={200} className="rounded" />
+        )}
+
+        {previewImagem && (
+          <Image src={previewImagem} alt="Nova imagem" width={300} height={200} className="rounded" />
+        )}
+
+        <input type="file" accept="image/*" onChange={handleImagemChange} />
+
+        <button
+          type="submit"
+          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+        >
+          Salvar Alterações
+        </button>
       </form>
     </main>
   )
