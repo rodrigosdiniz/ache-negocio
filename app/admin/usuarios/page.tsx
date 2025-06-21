@@ -10,6 +10,8 @@ export default function AdminUsuariosPage() {
   const [sessionChecked, setSessionChecked] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const [usuarios, setUsuarios] = useState<any[]>([])
+  const [filtroEmail, setFiltroEmail] = useState('')
+  const [filtroData, setFiltroData] = useState('')
 
   useEffect(() => {
     const checarAdmin = async () => {
@@ -21,13 +23,28 @@ export default function AdminUsuariosPage() {
     checarAdmin()
   }, [])
 
+  const carregarUsuarios = async () => {
+    const { data, error } = await supabase.auth.admin.listUsers({ page: 1, perPage: 100 })
+    if (!error) setUsuarios(data?.users || [])
+  }
+
   useEffect(() => {
-    const carregarUsuarios = async () => {
-      const { data, error } = await supabase.auth.admin.listUsers({ page: 1, perPage: 100 })
-      if (!error) setUsuarios(data?.users || [])
-    }
     if (isAdmin) carregarUsuarios()
   }, [isAdmin])
+
+  const excluirUsuario = async (id: string) => {
+    const confirmar = confirm('Tem certeza que deseja excluir este usuário? Esta ação é permanente.')
+    if (!confirmar) return
+
+    const { error } = await supabase.auth.admin.deleteUser(id)
+    if (!error) carregarUsuarios()
+  }
+
+  const usuariosFiltrados = usuarios.filter((u) => {
+    const emailMatch = u.email?.toLowerCase().includes(filtroEmail.toLowerCase())
+    const dataMatch = filtroData ? new Date(u.created_at).toLocaleDateString() === filtroData : true
+    return emailMatch && dataMatch
+  })
 
   if (!sessionChecked) return <div className="p-8">Verificando permissão...</div>
   if (!isAdmin) return <div className="p-8 text-red-600 font-semibold">Acesso restrito.</div>
@@ -36,7 +53,23 @@ export default function AdminUsuariosPage() {
     <div className="max-w-5xl mx-auto py-8 px-4">
       <h1 className="text-2xl font-bold mb-6">Usuários Registrados</h1>
 
-      {usuarios.length === 0 ? (
+      <div className="mb-6 flex flex-wrap gap-4">
+        <input
+          type="text"
+          placeholder="Filtrar por e-mail"
+          value={filtroEmail}
+          onChange={(e) => setFiltroEmail(e.target.value)}
+          className="border p-2 rounded-md"
+        />
+        <input
+          type="date"
+          value={filtroData}
+          onChange={(e) => setFiltroData(e.target.value)}
+          className="border p-2 rounded-md"
+        />
+      </div>
+
+      {usuariosFiltrados.length === 0 ? (
         <p className="text-gray-500">Nenhum usuário encontrado.</p>
       ) : (
         <table className="w-full border text-sm">
@@ -45,14 +78,23 @@ export default function AdminUsuariosPage() {
               <th className="p-2 border">Email</th>
               <th className="p-2 border">Data de Criação</th>
               <th className="p-2 border">ID</th>
+              <th className="p-2 border">Ações</th>
             </tr>
           </thead>
           <tbody>
-            {usuarios.map((u) => (
+            {usuariosFiltrados.map((u) => (
               <tr key={u.id}>
                 <td className="p-2 border text-blue-700">{u.email}</td>
                 <td className="p-2 border">{new Date(u.created_at).toLocaleDateString()}</td>
                 <td className="p-2 border text-gray-500">{u.id}</td>
+                <td className="p-2 border">
+                  <button
+                    onClick={() => excluirUsuario(u.id)}
+                    className="text-red-600 hover:underline"
+                  >
+                    Excluir
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
