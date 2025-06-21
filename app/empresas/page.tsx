@@ -1,52 +1,89 @@
-// app/empresas/page.tsx
-"use client"
+'use client'
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { supabase } from "@/lib/supabase";
-import { Star } from "lucide-react";
+import { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase'
+import Link from 'next/link'
+import { Star } from 'lucide-react'
 
 interface Empresa {
-  id: string;
-  nome: string;
-  cidade: string;
-  categoria: string;
-  nota_media: number | null;
+  id: string
+  nome: string
+  cidade: string
+  categoria: string
+  nota_media: number | null
 }
 
-export default function ListaEmpresasPage() {
-  const [empresas, setEmpresas] = useState<Empresa[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function EmpresasPage() {
+  const [empresas, setEmpresas] = useState<Empresa[]>([])
+  const [busca, setBusca] = useState('')
+  const [categoriaFiltro, setCategoriaFiltro] = useState('')
+  const [cidadeFiltro, setCidadeFiltro] = useState('')
+  const [categorias, setCategorias] = useState<string[]>([])
+  const [cidades, setCidades] = useState<string[]>([])
 
   useEffect(() => {
     const carregarEmpresas = async () => {
-      const { data, error } = await supabase
-        .from("empresas")
-        .select("id, nome, cidade, categoria, nota_media")
-        .order("nome", { ascending: true });
+      const { data } = await supabase.from('empresas').select('id, nome, cidade, categoria, nota_media')
+      if (data) {
+        setEmpresas(data)
+        const unicasCategorias = Array.from(new Set(data.map(e => e.categoria).filter(Boolean)))
+        const unicasCidades = Array.from(new Set(data.map(e => e.cidade).filter(Boolean)))
+        setCategorias(unicasCategorias)
+        setCidades(unicasCidades)
+      }
+    }
 
-      if (!error && data) setEmpresas(data);
-      setLoading(false);
-    };
+    carregarEmpresas()
+  }, [])
 
-    carregarEmpresas();
-  }, []);
-
-  if (loading) {
-    return <p className="text-center py-10 text-gray-600">Carregando empresas...</p>;
-  }
+  const empresasFiltradas = empresas.filter((e) => {
+    const nomeMatch = e.nome.toLowerCase().includes(busca.toLowerCase())
+    const categoriaMatch = categoriaFiltro ? e.categoria === categoriaFiltro : true
+    const cidadeMatch = cidadeFiltro ? e.cidade === cidadeFiltro : true
+    return nomeMatch && categoriaMatch && cidadeMatch
+  })
 
   return (
-    <main className="max-w-5xl mx-auto px-4 py-10">
+    <main className="max-w-6xl mx-auto px-4 py-10">
       <h1 className="text-3xl font-bold mb-6">Empresas Cadastradas</h1>
 
-      {empresas.length === 0 ? (
-        <p className="text-sm text-gray-600">Nenhuma empresa encontrada.</p>
+      <div className="grid md:grid-cols-3 gap-4 mb-6">
+        <input
+          type="text"
+          placeholder="Buscar por nome..."
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          className="border px-4 py-2 rounded"
+        />
+        <select
+          value={categoriaFiltro}
+          onChange={(e) => setCategoriaFiltro(e.target.value)}
+          className="border px-4 py-2 rounded"
+        >
+          <option value="">Todas as categorias</option>
+          {categorias.map((cat, i) => (
+            <option key={i} value={cat}>{cat}</option>
+          ))}
+        </select>
+        <select
+          value={cidadeFiltro}
+          onChange={(e) => setCidadeFiltro(e.target.value)}
+          className="border px-4 py-2 rounded"
+        >
+          <option value="">Todas as cidades</option>
+          {cidades.map((cidade, i) => (
+            <option key={i} value={cidade}>{cidade}</option>
+          ))}
+        </select>
+      </div>
+
+      {empresasFiltradas.length === 0 ? (
+        <p className="text-gray-600">Nenhuma empresa encontrada.</p>
       ) : (
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {empresas.map((empresa) => (
-            <li key={empresa.id} className="border p-4 rounded shadow hover:shadow-lg transition">
-              <Link href={`/empresa/${empresa.id}`} className="text-blue-600 font-semibold text-lg hover:underline">
+        <ul className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {empresasFiltradas.map((empresa) => (
+            <li key={empresa.id} className="border p-4 rounded shadow-sm hover:shadow-md transition">
+              <Link href={`/empresa/${empresa.id}`} className="text-blue-600 font-semibold hover:underline">
                 {empresa.nome}
               </Link>
               <p className="text-sm text-gray-600">{empresa.cidade} • {empresa.categoria}</p>
@@ -60,5 +97,5 @@ export default function ListaEmpresasPage() {
         </ul>
       )}
     </main>
-  );
+  )
 }
