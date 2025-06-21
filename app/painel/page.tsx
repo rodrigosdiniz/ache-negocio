@@ -78,4 +78,45 @@ export default function DashboardPerfil() {
       </section>
 
       <section>
-        <h2 className="text-x
+        <h2 className="text-xl font-semibold mb-4">Minhas Empresas</h2>
+        {empresas.length === 0 ? (
+          <p className="text-sm text-gray-600">Nenhuma empresa cadastrada ainda.</p>
+        ) : (
+          <ul className="space-y-4">
+            {empresas.map((empresa) => (
+              <li key={empresa.id} className="border p-4 rounded">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <Link href={`/empresa/${empresa.id}`} className="text-blue-600 font-semibold hover:underline">
+                      {empresa.nome}
+                    </Link>
+                    <p className="text-sm text-gray-600">{empresa.cidade} • {empresa.categoria}</p>
+                    {empresa.nota_media !== null && (
+                      <p className="flex items-center gap-1 text-sm text-yellow-600 mt-1">
+                        <Star className="w-4 h-4 fill-yellow-500" /> {empresa.nota_media.toFixed(1)} / 5
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    <Link
+                      href={`/painel/editar/${empresa.id}`}
+                      className="text-sm text-blue-600 hover:underline flex items-center gap-1"
+                    >
+                      <Pencil className="w-4 h-4" /> Editar
+                    </Link>
+                    <Link
+                      href={`/painel/editar/${empresa.id}/excluir`}
+                      className="text-sm text-red-600 hover:underline"
+                    >
+                      Excluir
+                    </Link>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </main>
+  )
+}
