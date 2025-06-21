@@ -1,56 +1,87 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { loadStripe } from '@stripe/stripe-js'
+import { createCheckoutLink } from '@/lib/stripe/client'
+import { Loader2 } from 'lucide-react'
 
-const stripePromise = loadStripe(
-  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
-)
+interface PlanoStripe {
+  nome: string
+  preco: string
+  descricao: string[]
+  priceId: string
+}
 
-const PLANOS = [
-  { nome: 'Essencial', preco: 'R$29/mês', stripePriceId: 'price_1SAESSD29', beneficios: ['3 empresas', 'Suporte por e-mail'] },
-  { nome: 'Profissional', preco: 'R$59/mês', stripePriceId: 'price_1SAPROD59', beneficios: ['10 empresas', 'Suporte prioritário'] },
-  { nome: 'Elite', preco: 'R$119/mês', stripePriceId: 'price_1SAELITE119', beneficios: ['Empresas ilimitadas', 'Suporte premium'] },
+const planos: PlanoStripe[] = [
+  {
+    nome: 'Essencial',
+    preco: 'R$ 29/mês',
+    priceId: 'price_1RXeTCDGX3huEh4zJhMxUuZb',
+    descricao: [
+      'Até 3 empresas cadastradas',
+      'Destaque nas buscas locais',
+      'Suporte prioritário via email'
+    ]
+  },
+  {
+    nome: 'Profissional',
+    preco: 'R$ 59/mês',
+    priceId: 'price_1RXeTpDGX3huEh4zFFeRPeUv',
+    descricao: [
+      'Até 10 empresas cadastradas',
+      'Logo personalizado',
+      'Página exclusiva com link do WhatsApp'
+    ]
+  },
+  {
+    nome: 'Elite',
+    preco: 'R$ 119/mês',
+    priceId: 'price_1RXeUFDGX3huEh4zZnLg8dE2',
+    descricao: [
+      'Empresas ilimitadas',
+      'Top destaque nas categorias',
+      'Campanhas e impulsionamentos sob demanda'
+    ]
+  }
 ]
 
 export default function UpgradePage() {
   const [userId, setUserId] = useState('')
+  const [carregando, setCarregando] = useState<string | null>(null)
 
   useEffect(() => {
-    const carregarUser = async () => {
-      const supabase = createClient()
-      const { data } = await supabase.auth.getUser()
-      if (data.user) setUserId(data.user.id)
+    const getUser = async () => {
+      const { data } = await fetch('/api/user').then(res => res.json())
+      if (data?.id) setUserId(data.id)
     }
-    carregarUser()
+    getUser()
   }, [])
 
-  const iniciarCheckout = async (priceId: string) => {
-    const res = await fetch('/api/stripe/checkout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ priceId, userId })
-    })
-    const { url } = await res.json()
+  const assinarPlano = async (priceId: string) => {
+    if (!userId) return alert('Usuário não autenticado')
+    setCarregando(priceId)
+    const { url } = await createCheckoutLink({ priceId, userId })
     window.location.href = url
   }
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-10">
-      <h1 className="text-3xl font-bold mb-6">Escolha seu Plano</h1>
+      <h1 className="text-3xl font-bold mb-8 text-center">Escolha seu plano</h1>
       <div className="grid md:grid-cols-3 gap-6">
-        {PLANOS.map((plano) => (
-          <div key={plano.nome} className="border rounded-xl p-6 shadow hover:shadow-md">
-            <h2 className="text-xl font-bold mb-2">{plano.nome}</h2>
-            <p className="text-2xl text-blue-600 mb-4">{plano.preco}</p>
-            <ul className="mb-4 list-disc list-inside text-sm">
-              {plano.beneficios.map((b, i) => <li key={i}>{b}</li>)}
+        {planos.map((plano) => (
+          <div key={plano.priceId} className="border rounded-xl p-6 bg-white shadow hover:shadow-lg transition">
+            <h2 className="text-xl font-semibold mb-2 text-center">{plano.nome}</h2>
+            <p className="text-center text-blue-600 font-bold text-lg mb-4">{plano.preco}</p>
+            <ul className="mb-6 text-sm text-gray-700 space-y-1">
+              {plano.descricao.map((item, i) => (
+                <li key={i}>• {item}</li>
+              ))}
             </ul>
             <button
-              onClick={() => iniciarCheckout(plano.stripePriceId)}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full"
+              disabled={carregando === plano.priceId}
+              onClick={() => assinarPlano(plano.priceId)}
+              className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 flex items-center justify-center gap-2"
             >
+              {carregando === plano.priceId && <Loader2 className="w-4 h-4 animate-spin" />}
               Assinar
             </button>
           </div>
