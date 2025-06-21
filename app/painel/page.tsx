@@ -2,144 +2,98 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import Link from 'next/link'
-import { Star, Pencil, Trash2 } from 'lucide-react'
+import { Textarea } from '@/components/ui/textarea'
+import { Button } from '@/components/ui/button'
+import { Loader2 } from 'lucide-react'
 
-interface Empresa {
+interface Avaliacao {
   id: string
-  nome: string
-  cidade: string
-  categoria: string
-  nota_media: number | null
-  imagem_path?: string | null
+  comentario: string
+  nota: number
+  resposta: string | null
+  created_at: string
+  user: {
+    full_name: string | null
+  }
 }
 
-interface Plano {
-  plano: string
-  atualizado_em: string
+interface Props {
+  empresaId: string
+  userId: string
 }
 
-export default function DashboardPerfil() {
-  const [empresas, setEmpresas] = useState<Empresa[]>([])
-  const [plano, setPlano] = useState<Plano | null>(null)
+export default function AvaliacoesPainel({ empresaId, userId }: Props) {
+  const [avaliacoes, setAvaliacoes] = useState<Avaliacao[]>([])
   const [loading, setLoading] = useState(true)
+  const [respostas, setRespostas] = useState<{ [id: string]: string }>({})
+  const [salvando, setSalvando] = useState<string>('')
 
   useEffect(() => {
     const carregar = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return setLoading(false)
+      const { data } = await supabase
+        .from('avaliacoes')
+        .select('id, comentario, nota, resposta, created_at, user:auth.users(full_name)')
+        .eq('empresa_id', empresaId)
+        .order('created_at', { ascending: false })
 
-      const [empresasRes, planoRes] = await Promise.all([
-        supabase
-          .from('empresas')
-          .select('id, nome, cidade, categoria, nota_media, imagem_path')
-          .eq('user_id', user.id),
-
-        supabase
-          .from('usuarios_planos')
-          .select('plano, atualizado_em')
-          .eq('user_id', user.id)
-          .single()
-      ])
-
-      if (empresasRes.data) setEmpresas(empresasRes.data)
-      if (planoRes.data) setPlano(planoRes.data)
+      if (data) {
+        setAvaliacoes(data)
+        const respObj: { [id: string]: string } = {}
+        data.forEach((a) => respObj[a.id] = a.resposta || '')
+        setRespostas(respObj)
+      }
       setLoading(false)
     }
 
     carregar()
-  }, [])
+  }, [empresaId])
 
-  const excluirEmpresa = async (id: string, nome: string, imagemPath?: string | null) => {
-    const confirmar = confirm(`Deseja realmente excluir a empresa "${nome}"? Essa ação não poderá ser desfeita.`)
-    if (!confirmar) return
+  const salvarResposta = async (id: string) => {
+    setSalvando(id)
+    const { error } = await supabase
+      .from('avaliacoes')
+      .update({ resposta: respostas[id] })
+      .eq('id', id)
 
-    if (imagemPath) {
-      await supabase.storage.from('empresas').remove([imagemPath])
-    }
+    if (!error) alert('Resposta salva com sucesso.')
+    else alert('Erro ao salvar resposta.')
 
-    const res = await fetch('/api/empresa/excluir', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id }),
-    })
-
-    if (res.ok) {
-      alert('Empresa excluída com sucesso.')
-      setEmpresas((empresas) => empresas.filter((e) => e.id !== id))
-    } else {
-      alert('Erro ao excluir a empresa.')
-    }
+    setSalvando('')
   }
 
-  if (loading) {
-    return <p className="text-center text-sm text-gray-600 py-10">Carregando dados...</p>
-  }
+  if (loading) return <p className="text-sm text-gray-600">Carregando avaliações...</p>
 
   return (
-    <main className="max-w-5xl mx-auto px-4 py-10">
-      <h1 className="text-3xl font-bold mb-6">Meu Painel</h1>
+    <div className="space-y-6">
+      {avaliacoes.length === 0 ? (
+        <p className="text-sm text-gray-600">Nenhuma avaliação recebida ainda.</p>
+      ) : (
+        avaliacoes.map((a) => (
+          <div key={a.id} className="border p-4 rounded">
+            <p className="font-medium text-yellow-700">Nota: {a.nota}</p>
+            <p className="text-sm text-gray-800">{a.comentario}</p>
+            <p className="text-sm text-gray-500">por {a.user?.full_name || 'usuário'} em {new Date(a.created_at).toLocaleDateString()}</p>
 
-      <section className="mb-10">
-        <h2 className="text-xl font-semibold mb-2">Plano Atual</h2>
-        {plano ? (
-          <div className="border p-4 rounded bg-gray-50">
-            <p><strong>Plano:</strong> {plano.plano}</p>
-            <p className="text-sm text-gray-500">
-              Atualizado em: {new Date(plano.atualizado_em).toLocaleDateString('pt-BR')}
-            </p>
-            <Link
-              href="/upgrade"
-              className="inline-block mt-3 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-            >
-              Alterar Plano
-            </Link>
+            <div className="mt-3">
+              <label className="text-sm font-medium text-gray-700 block mb-1">Responder:</label>
+              <Textarea
+                rows={3}
+                value={respostas[a.id]}
+                onChange={(e) => setRespostas({ ...respostas, [a.id]: e.target.value })}
+              />
+              <Button
+                onClick={() => salvarResposta(a.id)}
+                className="mt-2"
+                disabled={salvando === a.id}
+              >
+                {salvando === a.id ? (
+                  <><Loader2 className="w-4 h-4 animate-spin inline mr-2" /> Salvando...</>
+                ) : 'Salvar Resposta'}
+              </Button>
+            </div>
           </div>
-        ) : (
-          <p className="text-sm text-gray-600">Nenhum plano ativo.</p>
-        )}
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold mb-4">Minhas Empresas</h2>
-        {empresas.length === 0 ? (
-          <p className="text-sm text-gray-600">Nenhuma empresa cadastrada ainda.</p>
-        ) : (
-          <ul className="space-y-4">
-            {empresas.map((empresa) => (
-              <li key={empresa.id} className="border p-4 rounded">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <Link href={`/empresa/${empresa.id}`} className="text-blue-600 font-semibold hover:underline">
-                      {empresa.nome}
-                    </Link>
-                    <p className="text-sm text-gray-600">{empresa.cidade} • {empresa.categoria}</p>
-                    {empresa.nota_media !== null && (
-                      <p className="flex items-center gap-1 text-sm text-yellow-600 mt-1">
-                        <Star className="w-4 h-4 fill-yellow-500" /> {empresa.nota_media.toFixed(1)} / 5
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex flex-col items-end gap-2">
-                    <Link
-                      href={`/painel/editar/${empresa.id}`}
-                      className="text-sm text-blue-600 hover:underline flex items-center gap-1"
-                    >
-                      <Pencil className="w-4 h-4" /> Editar
-                    </Link>
-                    <button
-                      onClick={() => excluirEmpresa(empresa.id, empresa.nome, empresa.imagem_path)}
-                      className="text-sm text-red-600 hover:underline flex items-center gap-1"
-                    >
-                      <Trash2 className="w-4 h-4" /> Excluir
-                    </button>
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-    </main>
+        ))
+      )}
+    </div>
   )
 }
