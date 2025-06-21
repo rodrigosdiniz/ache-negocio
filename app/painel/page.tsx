@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
-import { Star, Pencil, Trash2, PlusCircle } from 'lucide-react'
+import { Star, Pencil, Trash2 } from 'lucide-react'
 
 interface Empresa {
   id: string
@@ -11,6 +11,7 @@ interface Empresa {
   cidade: string
   categoria: string
   nota_media: number | null
+  imagem_path?: string | null
 }
 
 interface Plano {
@@ -31,7 +32,7 @@ export default function DashboardPerfil() {
       const [empresasRes, planoRes] = await Promise.all([
         supabase
           .from('empresas')
-          .select('id, nome, cidade, categoria, nota_media')
+          .select('id, nome, cidade, categoria, nota_media, imagem_path')
           .eq('user_id', user.id),
 
         supabase
@@ -49,9 +50,13 @@ export default function DashboardPerfil() {
     carregar()
   }, [])
 
-  const excluirEmpresa = async (id: string, nome: string) => {
+  const excluirEmpresa = async (id: string, nome: string, imagemPath?: string | null) => {
     const confirmar = confirm(`Deseja realmente excluir a empresa "${nome}"? Essa ação não poderá ser desfeita.`)
     if (!confirmar) return
+
+    if (imagemPath) {
+      await supabase.storage.from('empresas').remove([imagemPath])
+    }
 
     const res = await fetch('/api/empresa/excluir', {
       method: 'POST',
@@ -96,16 +101,7 @@ export default function DashboardPerfil() {
       </section>
 
       <section>
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Minhas Empresas</h2>
-          <Link
-            href="/painel/nova"
-            className="inline-flex items-center gap-2 bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700"
-          >
-            <PlusCircle className="w-5 h-5" /> Nova Empresa
-          </Link>
-        </div>
-
+        <h2 className="text-xl font-semibold mb-4">Minhas Empresas</h2>
         {empresas.length === 0 ? (
           <p className="text-sm text-gray-600">Nenhuma empresa cadastrada ainda.</p>
         ) : (
@@ -132,7 +128,7 @@ export default function DashboardPerfil() {
                       <Pencil className="w-4 h-4" /> Editar
                     </Link>
                     <button
-                      onClick={() => excluirEmpresa(empresa.id, empresa.nome)}
+                      onClick={() => excluirEmpresa(empresa.id, empresa.nome, empresa.imagem_path)}
                       className="text-sm text-red-600 hover:underline flex items-center gap-1"
                     >
                       <Trash2 className="w-4 h-4" /> Excluir
