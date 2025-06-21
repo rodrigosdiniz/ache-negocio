@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { Loader2, Pencil, Trash2, Save, XCircle } from 'lucide-react'
 
 const EMAIL_ADMIN = 'contato@achenegocio.com.br'
 
@@ -14,6 +15,7 @@ export default function AdminCidadesPage() {
   const [editandoId, setEditandoId] = useState<string | null>(null)
   const [novoNome, setNovoNome] = useState('')
   const [erro, setErro] = useState('')
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     const checarAdmin = async () => {
@@ -26,8 +28,10 @@ export default function AdminCidadesPage() {
   }, [])
 
   const carregarCidades = async () => {
+    setLoading(true)
     const { data } = await supabase.from('cidades').select('*').order('nome')
     setCidades(data || [])
+    setLoading(false)
   }
 
   useEffect(() => {
@@ -42,16 +46,18 @@ export default function AdminCidadesPage() {
       setErro('Esta cidade já existe.')
       return
     }
+    setLoading(true)
     await supabase.from('cidades').insert({ nome: novaCidade })
     setNovaCidade('')
-    carregarCidades()
+    await carregarCidades()
   }
 
   const excluirCidade = async (id: string) => {
     const confirmar = confirm('Tem certeza que deseja excluir esta cidade?')
     if (!confirmar) return
+    setLoading(true)
     await supabase.from('cidades').delete().eq('id', id)
-    carregarCidades()
+    await carregarCidades()
   }
 
   const salvarEdicao = async (id: string) => {
@@ -62,10 +68,11 @@ export default function AdminCidadesPage() {
       setErro('Já existe uma cidade com esse nome.')
       return
     }
+    setLoading(true)
     await supabase.from('cidades').update({ nome: novoNome }).eq('id', id)
     setEditandoId(null)
     setNovoNome('')
-    carregarCidades()
+    await carregarCidades()
   }
 
   if (!sessionChecked) return <div className="p-8">Verificando permissão...</div>
@@ -83,36 +90,66 @@ export default function AdminCidadesPage() {
           onChange={(e) => setNovaCidade(e.target.value)}
           placeholder="Nova cidade"
           className="border rounded px-3 py-2 w-full"
+          aria-label="Campo para adicionar nova cidade"
         />
-        <button onClick={adicionarCidade} className="bg-blue-600 text-white px-4 rounded">Adicionar</button>
+        <button
+          onClick={adicionarCidade}
+          className="bg-blue-600 text-white px-4 rounded"
+          aria-label="Adicionar cidade"
+        >
+          {loading ? <Loader2 className="animate-spin w-4 h-4" /> : 'Adicionar'}
+        </button>
       </div>
 
       {erro && <p className="text-red-600 text-sm mb-4">{erro}</p>}
 
       <ul className="divide-y">
-        {cidades.map((cidade) => (
-          <li key={cidade.id} className="py-2 flex justify-between items-center">
-            {editandoId === cidade.id ? (
-              <>
-                <input
-                  value={novoNome}
-                  onChange={(e) => setNovoNome(e.target.value)}
-                  className="border px-2 py-1 rounded mr-2"
-                />
-                <button onClick={() => salvarEdicao(cidade.id)} className="text-green-600 mr-2">Salvar</button>
-                <button onClick={() => setEditandoId(null)} className="text-gray-500">Cancelar</button>
-              </>
-            ) : (
-              <>
-                <span>{cidade.nome}</span>
-                <div className="flex gap-3">
-                  <button onClick={() => { setEditandoId(cidade.id); setNovoNome(cidade.nome) }} className="text-blue-600 text-sm">Editar</button>
-                  <button onClick={() => excluirCidade(cidade.id)} className="text-red-600 hover:underline text-sm">Excluir</button>
-                </div>
-              </>
-            )}
-          </li>
-        ))}
+        {loading && cidades.length === 0 ? (
+          <div className="flex justify-center items-center h-20">
+            <Loader2 className="animate-spin w-6 h-6 text-gray-500" />
+          </div>
+        ) : (
+          cidades.map((cidade) => (
+            <li key={cidade.id} className="py-2 flex justify-between items-center">
+              {editandoId === cidade.id ? (
+                <>
+                  <input
+                    value={novoNome}
+                    onChange={(e) => setNovoNome(e.target.value)}
+                    className="border px-2 py-1 rounded mr-2"
+                    aria-label="Editar nome da cidade"
+                  />
+                  <button onClick={() => salvarEdicao(cidade.id)} className="text-green-600 mr-2" aria-label="Salvar edição">
+                    <Save size={16} />
+                  </button>
+                  <button onClick={() => setEditandoId(null)} className="text-gray-500" aria-label="Cancelar edição">
+                    <XCircle size={16} />
+                  </button>
+                </>
+              ) : (
+                <>
+                  <span>{cidade.nome}</span>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => { setEditandoId(cidade.id); setNovoNome(cidade.nome) }}
+                      className="text-blue-600"
+                      aria-label="Editar cidade"
+                    >
+                      <Pencil size={16} />
+                    </button>
+                    <button
+                      onClick={() => excluirCidade(cidade.id)}
+                      className="text-red-600"
+                      aria-label="Excluir cidade"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </>
+              )}
+            </li>
+          ))
+        )}
       </ul>
     </div>
   )
