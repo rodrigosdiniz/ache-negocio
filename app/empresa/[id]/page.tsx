@@ -1,88 +1,70 @@
-'use client'
+// app/empresa/[id]/page.tsx
 
-import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
-import { Star } from 'lucide-react'
-import Image from 'next/image'
-import AvaliarEmpresa from '@/components/AvaliarEmpresa'
+import { AvaliacaoCard } from '@/components/AvaliacaoCard'
+import { getSession } from '@supabase/auth-helpers-nextjs'
 
-interface Empresa {
-  id: string
-  nome: string
-  descricao?: string
-  cidade?: string
-  categoria?: string
-  endereco?: string
-  imagem?: string
-  nota_media?: number | null
+interface PageProps {
+  params: { id: string }
 }
 
-export default function EmpresaPage({ params }: { params: { id: string } }) {
-  const [empresa, setEmpresa] = useState<Empresa | null>(null)
-  const [loading, setLoading] = useState(true)
+export default async function EmpresaPage({ params }: PageProps) {
+  const cookieStore = cookies()
+  const supabase = createClient(cookieStore)
 
-  useEffect(() => {
-    const carregar = async () => {
-      const { data } = await supabase
-        .from('empresas')
-        .select('*')
-        .eq('id', params.id)
-        .single()
+  // Busca os dados da empresa
+  const { data: empresa, error: erroEmpresa } = await supabase
+    .from('empresas')
+    .select('*')
+    .eq('id', params.id)
+    .single()
 
-      if (!data) return notFound()
-      setEmpresa(data)
-      setLoading(false)
-    }
+  if (!empresa) return notFound()
 
-    carregar()
-  }, [params.id])
+  // Busca o usuário logado
+  const session = await getSession()
+  const userId = session?.user?.id
 
-  if (loading) {
-    return <p className="text-center text-gray-600 py-10">Carregando...</p>
-  }
-
-  if (!empresa) {
-    return <p className="text-center text-red-600 py-10">Empresa não encontrada.</p>
-  }
+  // Busca as avaliações dessa empresa
+  const { data: avaliacoes, error: erroAvaliacoes } = await supabase
+    .from('avaliacoes')
+    .select('*')
+    .eq('empresa_id', params.id)
+    .order('created_at', { ascending: false })
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-10">
+    <div className="max-w-4xl mx-auto py-8 px-4">
       <h1 className="text-3xl font-bold mb-4">{empresa.nome}</h1>
+      <p className="text-gray-600 mb-6">{empresa.descricao}</p>
 
-      {empresa.imagem && (
-        <div className="mb-6">
-          <Image
-            src={empresa.imagem}
-            alt={empresa.nome}
-            width={800}
-            height={400}
-            className="rounded shadow"
-          />
+      {/* Avaliações */}
+      <section className="mt-10">
+        <h2 className="text-2xl font-semibold mb-4">Avaliações</h2>
+
+        {avaliacoes?.length === 0 && (
+          <p className="text-gray-500">Ainda não há avaliações para esta empresa.</p>
+        )}
+
+        <div className="space-y-4">
+          {avaliacoes?.map((avaliacao) => (
+            <AvaliacaoCard
+              key={avaliacao.id}
+              avaliacao={avaliacao}
+              isAutor={avaliacao.user_id === userId}
+              isDono={empresa.user_id === userId}
+              onEditar={() => {
+                // Lógica para abrir modal ou redirecionar para editar
+              }}
+              onExcluir={() => {
+                // Lógica para confirmar e excluir avaliação
+              }}
+            />
+          ))}
         </div>
-      )}
-
-      <div className="mb-4 space-y-1">
-        {empresa.endereco && <p><strong>Endereço:</strong> {empresa.endereco}</p>}
-        {empresa.cidade && <p><strong>Cidade:</strong> {empresa.cidade}</p>}
-        {empresa.categoria && <p><strong>Categoria:</strong> {empresa.categoria}</p>}
-      </div>
-
-      {empresa.descricao && (
-        <div className="mb-4">
-          <h2 className="text-xl font-semibold mb-2">Descrição</h2>
-          <p className="text-gray-700 whitespace-pre-line">{empresa.descricao}</p>
-        </div>
-      )}
-
-      {empresa.nota_media !== null && (
-        <div className="mb-4 text-yellow-600 flex items-center gap-1">
-          <Star className="w-5 h-5 fill-yellow-500" />
-          <span className="font-medium">{empresa.nota_media.toFixed(1)} / 5</span>
-        </div>
-      )}
-
-      <AvaliarEmpresa empresaId={empresa.id} />
-    </main>
+      </section>
+    </div>
   )
 }
