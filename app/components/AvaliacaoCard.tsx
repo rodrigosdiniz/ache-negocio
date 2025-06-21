@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Star } from 'lucide-react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { motion } from 'framer-motion'
+import { Menu } from '@headlessui/react'
 
 interface Avaliacao {
   id: string
@@ -31,9 +32,16 @@ export function AvaliacaoCard({
   onExcluir
 }: AvaliacaoCardProps) {
   const supabase = createClientComponentClient()
-
   const [resposta, setResposta] = useState(avaliacao.resposta_dono || '')
   const [salvando, setSalvando] = useState(false)
+
+  const motivos = [
+    'Conteúdo ofensivo',
+    'Spam ou promoção indevida',
+    'Linguagem inapropriada',
+    'Informação falsa',
+    'Outro'
+  ]
 
   const estrelas = Array.from({ length: 5 }, (_, i) => (
     <Star
@@ -50,6 +58,25 @@ export function AvaliacaoCard({
       .update({ resposta_dono: resposta })
       .eq('id', avaliacao.id)
     setSalvando(false)
+  }
+
+  const handleDenuncia = async (motivo: string) => {
+    const { data: user } = await supabase.auth.getUser()
+    const userId = user?.user?.id
+
+    if (!userId) return alert('Você precisa estar logado para denunciar.')
+
+    const { error } = await supabase.from('denuncias').insert({
+      avaliacao_id: avaliacao.id,
+      user_id: userId,
+      motivo
+    })
+
+    if (error) {
+      alert('Erro ao registrar denúncia.')
+    } else {
+      alert('Denúncia enviada com sucesso.')
+    }
   }
 
   return (
@@ -94,22 +121,49 @@ export function AvaliacaoCard({
         </div>
       )}
 
-      {isAutor && (
-        <div className="flex gap-3 text-sm mt-2">
-          <button
-            onClick={onEditar}
-            className="text-blue-600 hover:underline"
-          >
-            Editar
-          </button>
-          <button
-            onClick={onExcluir}
-            className="text-red-600 hover:underline"
-          >
-            Excluir
-          </button>
-        </div>
-      )}
+      <div className="flex gap-3 text-sm mt-2">
+        {isAutor && (
+          <>
+            <button
+              onClick={onEditar}
+              className="text-blue-600 hover:underline"
+            >
+              Editar
+            </button>
+            <button
+              onClick={onExcluir}
+              className="text-red-600 hover:underline"
+            >
+              Excluir
+            </button>
+          </>
+        )}
+
+        {/* Botão de denúncia */}
+        {!isAutor && !isDono && (
+          <Menu as="div" className="relative inline-block text-left">
+            <Menu.Button className="text-red-500 hover:underline">
+              Denunciar
+            </Menu.Button>
+            <Menu.Items className="absolute z-10 mt-2 w-56 origin-top-right bg-white border border-gray-200 rounded-md shadow-lg focus:outline-none">
+              {motivos.map((motivo) => (
+                <Menu.Item key={motivo}>
+                  {({ active }) => (
+                    <button
+                      onClick={() => handleDenuncia(motivo)}
+                      className={`block px-4 py-2 text-sm w-full text-left ${
+                        active ? 'bg-red-100 text-red-800' : 'text-gray-800'
+                      }`}
+                    >
+                      {motivo}
+                    </button>
+                  )}
+                </Menu.Item>
+              ))}
+            </Menu.Items>
+          </Menu>
+        )}
+      </div>
     </motion.div>
   )
 }
