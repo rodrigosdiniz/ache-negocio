@@ -5,7 +5,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { Star } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
-const EMAIL_ADMIN = 'seuemail@admin.com' // ✅ Altere para seu e-mail de admin
+const EMAIL_ADMIN = 'contato@achenegocio.com' // ✅ Altere para seu e-mail de admin
 
 export default function AdminDenunciasPage() {
   const supabase = createClientComponentClient()
