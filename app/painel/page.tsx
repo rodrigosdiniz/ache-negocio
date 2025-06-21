@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
-import { Star, Pencil } from 'lucide-react'
+import { Star, Pencil, Trash2 } from 'lucide-react'
 
 interface Empresa {
   id: string
@@ -48,6 +48,24 @@ export default function DashboardPerfil() {
 
     carregar()
   }, [])
+
+  const excluirEmpresa = async (id: string, nome: string) => {
+    const confirmar = confirm(`Deseja realmente excluir a empresa "${nome}"? Essa ação não poderá ser desfeita.`)
+    if (!confirmar) return
+
+    const res = await fetch('/api/empresa/excluir', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    })
+
+    if (res.ok) {
+      alert('Empresa excluída com sucesso.')
+      setEmpresas((empresas) => empresas.filter((e) => e.id !== id))
+    } else {
+      alert('Erro ao excluir a empresa.')
+    }
+  }
 
   if (loading) {
     return <p className="text-center text-sm text-gray-600 py-10">Carregando dados...</p>
@@ -97,19 +115,19 @@ export default function DashboardPerfil() {
                       </p>
                     )}
                   </div>
-                  <div className="flex flex-col items-end gap-1">
+                  <div className="flex flex-col items-end gap-2">
                     <Link
                       href={`/painel/editar/${empresa.id}`}
                       className="text-sm text-blue-600 hover:underline flex items-center gap-1"
                     >
                       <Pencil className="w-4 h-4" /> Editar
                     </Link>
-                    <Link
-                      href={`/painel/editar/${empresa.id}/excluir`}
-                      className="text-sm text-red-600 hover:underline"
+                    <button
+                      onClick={() => excluirEmpresa(empresa.id, empresa.nome)}
+                      className="text-sm text-red-600 hover:underline flex items-center gap-1"
                     >
-                      Excluir
-                    </Link>
+                      <Trash2 className="w-4 h-4" /> Excluir
+                    </button>
                   </div>
                 </div>
               </li>
