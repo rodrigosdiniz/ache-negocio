@@ -1,111 +1,88 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { Star, MessageSquareReply } from 'lucide-react'
+import { notFound } from 'next/navigation'
+import { Star } from 'lucide-react'
+import Image from 'next/image'
+import AvaliarEmpresa from '@/components/AvaliarEmpresa'
 
-interface Avaliacao {
+interface Empresa {
   id: string
-  usuario_nome: string
-  nota: number
-  comentario: string
-  criado_em: string
-  resposta?: string
+  nome: string
+  descricao?: string
+  cidade?: string
+  categoria?: string
+  endereco?: string
+  imagem?: string
+  nota_media?: number | null
 }
 
-export default function AvaliacoesEmpresa() {
-  const { id } = useParams()
-  const [avaliacoes, setAvaliacoes] = useState<Avaliacao[]>([])
-  const [filtroNota, setFiltroNota] = useState<number | null>(null)
-  const [busca, setBusca] = useState('')
-  const [ordenacao, setOrdenacao] = useState<'data' | 'nota'>('data')
+export default function EmpresaPage({ params }: { params: { id: string } }) {
+  const [empresa, setEmpresa] = useState<Empresa | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const carregarAvaliacoes = async () => {
-      let query = supabase
-        .from('avaliacoes')
+    const carregar = async () => {
+      const { data } = await supabase
+        .from('empresas')
         .select('*')
-        .eq('empresa_id', id)
+        .eq('id', params.id)
+        .single()
 
-      if (filtroNota) query = query.gte('nota', filtroNota)
-      if (ordenacao === 'nota') query = query.order('nota', { ascending: false })
-      else query = query.order('criado_em', { ascending: false })
-
-      const { data } = await query
-      if (data) {
-        setAvaliacoes(
-          data.filter((a) =>
-            a.comentario.toLowerCase().includes(busca.toLowerCase()) ||
-            a.usuario_nome.toLowerCase().includes(busca.toLowerCase())
-          )
-        )
-      }
+      if (!data) return notFound()
+      setEmpresa(data)
+      setLoading(false)
     }
 
-    carregarAvaliacoes()
-  }, [id, filtroNota, busca, ordenacao])
+    carregar()
+  }, [params.id])
+
+  if (loading) {
+    return <p className="text-center text-gray-600 py-10">Carregando...</p>
+  }
+
+  if (!empresa) {
+    return <p className="text-center text-red-600 py-10">Empresa não encontrada.</p>
+  }
 
   return (
-    <section className="mt-10">
-      <h2 className="text-2xl font-semibold mb-4">Avaliações</h2>
+    <main className="max-w-4xl mx-auto px-4 py-10">
+      <h1 className="text-3xl font-bold mb-4">{empresa.nome}</h1>
 
-      <div className="flex flex-wrap items-center gap-4 mb-6">
-        <select
-          value={filtroNota || ''}
-          onChange={(e) => setFiltroNota(e.target.value ? parseInt(e.target.value) : null)}
-          className="border rounded px-3 py-2"
-        >
-          <option value="">Todas as notas</option>
-          <option value="4">Notas 4+</option>
-          <option value="3">Notas 3+</option>
-        </select>
+      {empresa.imagem && (
+        <div className="mb-6">
+          <Image
+            src={empresa.imagem}
+            alt={empresa.nome}
+            width={800}
+            height={400}
+            className="rounded shadow"
+          />
+        </div>
+      )}
 
-        <select
-          value={ordenacao}
-          onChange={(e) => setOrdenacao(e.target.value as 'data' | 'nota')}
-          className="border rounded px-3 py-2"
-        >
-          <option value="data">Mais recentes</option>
-          <option value="nota">Mais bem avaliadas</option>
-        </select>
-
-        <input
-          type="text"
-          placeholder="Buscar por comentário ou nome"
-          value={busca}
-          onChange={(e) => setBusca(e.target.value)}
-          className="border px-3 py-2 rounded w-64"
-        />
+      <div className="mb-4 space-y-1">
+        {empresa.endereco && <p><strong>Endereço:</strong> {empresa.endereco}</p>}
+        {empresa.cidade && <p><strong>Cidade:</strong> {empresa.cidade}</p>}
+        {empresa.categoria && <p><strong>Categoria:</strong> {empresa.categoria}</p>}
       </div>
 
-      <ul className="space-y-4">
-        {avaliacoes.map((a) => (
-          <li key={a.id} className="border p-4 rounded bg-white shadow-sm">
-            <div className="flex justify-between items-center">
-              <p className="font-semibold">{a.usuario_nome}</p>
-              <div className="flex items-center text-yellow-600">
-                <Star className="w-4 h-4 fill-yellow-500 mr-1" /> {a.nota.toFixed(1)} / 5
-              </div>
-            </div>
-            <p className="text-sm text-gray-700 mt-2">{a.comentario}</p>
-            <p className="text-xs text-gray-400 mt-1">{new Date(a.criado_em).toLocaleDateString('pt-BR')}</p>
+      {empresa.descricao && (
+        <div className="mb-4">
+          <h2 className="text-xl font-semibold mb-2">Descrição</h2>
+          <p className="text-gray-700 whitespace-pre-line">{empresa.descricao}</p>
+        </div>
+      )}
 
-            {a.resposta && (
-              <div className="mt-3 border-l-4 border-blue-500 pl-4 text-sm text-blue-700">
-                <p className="flex items-center gap-2 font-medium">
-                  <MessageSquareReply className="w-4 h-4" /> Resposta do proprietário:
-                </p>
-                <p className="mt-1">{a.resposta}</p>
-              </div>
-            )}
-          </li>
-        ))}
+      {empresa.nota_media !== null && (
+        <div className="mb-4 text-yellow-600 flex items-center gap-1">
+          <Star className="w-5 h-5 fill-yellow-500" />
+          <span className="font-medium">{empresa.nota_media.toFixed(1)} / 5</span>
+        </div>
+      )}
 
-        {avaliacoes.length === 0 && (
-          <p className="text-gray-600 text-sm">Nenhuma avaliação encontrada.</p>
-        )}
-      </ul>
-    </section>
+      <AvaliarEmpresa empresaId={empresa.id} />
+    </main>
   )
 }
