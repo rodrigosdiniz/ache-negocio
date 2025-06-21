@@ -10,6 +10,7 @@ export default function AdminPlanosPage() {
   const [sessionChecked, setSessionChecked] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const [usuariosPlanos, setUsuariosPlanos] = useState<any[]>([])
+  const [filtroPlano, setFiltroPlano] = useState('')
 
   useEffect(() => {
     const checarAdmin = async () => {
@@ -36,12 +37,31 @@ export default function AdminPlanosPage() {
   if (!sessionChecked) return <div className="p-8">Verificando permissão...</div>
   if (!isAdmin) return <div className="p-8 text-red-600 font-semibold">Acesso restrito.</div>
 
+  const planosFiltrados = usuariosPlanos.filter((u) =>
+    filtroPlano ? u.plano === filtroPlano : true
+  )
+
   return (
     <div className="max-w-4xl mx-auto py-8 px-4">
       <h1 className="text-2xl font-bold mb-6">Planos e Assinaturas</h1>
 
-      {usuariosPlanos.length === 0 ? (
-        <p className="text-gray-500">Nenhuma assinatura registrada.</p>
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-700 mb-1">Filtrar por plano:</label>
+        <select
+          value={filtroPlano}
+          onChange={(e) => setFiltroPlano(e.target.value)}
+          className="border rounded-md p-2 w-full max-w-xs"
+        >
+          <option value="">Todos</option>
+          <option value="Gratuito">Gratuito</option>
+          <option value="Essencial">Essencial</option>
+          <option value="Profissional">Profissional</option>
+          <option value="Elite">Elite</option>
+        </select>
+      </div>
+
+      {planosFiltrados.length === 0 ? (
+        <p className="text-gray-500">Nenhuma assinatura encontrada.</p>
       ) : (
         <table className="w-full border text-sm">
           <thead>
@@ -52,16 +72,7 @@ export default function AdminPlanosPage() {
             </tr>
           </thead>
           <tbody>
-            {usuariosPlanos.map((u) => (
+            {planosFiltrados.map((u) => (
               <tr key={u.id}>
                 <td className="p-2 border text-blue-700">{u.email}</td>
                 <td className="p-2 border">{u.plano}</td>
-                <td className="p-2 border">{new Date(u.created_at).toLocaleDateString()}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-    </div>
-  )
-}
