@@ -5,7 +5,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { Star } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
-const EMAIL_ADMIN = 'contato@achenegocio.com' // ✅ Altere para seu e-mail de admin
+const EMAIL_ADMIN = 'contato@achenegocio.com.br' // ✅ E-mail de admin
 
 export default function AdminDenunciasPage() {
   const supabase = createClientComponentClient()
@@ -28,17 +28,17 @@ export default function AdminDenunciasPage() {
     checarAdmin()
   }, [])
 
-  useEffect(() => {
-    if (!isAdmin) return
-    const carregar = async () => {
-      const { data } = await supabase
-        .from('denuncias')
-        .select('id, motivo, created_at, user_id, avaliacao_id, avaliacoes(*, empresas(nome))')
-        .order('created_at', { ascending: false })
+  const carregarDenuncias = async () => {
+    const { data } = await supabase
+      .from('denuncias')
+      .select('id, motivo, created_at, user_id, avaliacao_id, avaliacoes(*, empresas(nome))')
+      .order('created_at', { ascending: false })
 
-      setDenuncias(data || [])
-    }
-    carregar()
+    setDenuncias(data || [])
+  }
+
+  useEffect(() => {
+    if (isAdmin) carregarDenuncias()
   }, [isAdmin])
 
   const excluirAvaliacao = async (id: string) => {
@@ -46,7 +46,15 @@ export default function AdminDenunciasPage() {
     if (!confirmar) return
 
     await supabase.from('avaliacoes').delete().eq('id', id)
-    router.refresh()
+    await carregarDenuncias()
+  }
+
+  const excluirDenuncia = async (id: string) => {
+    const confirmar = confirm('Deseja remover esta denúncia da lista?')
+    if (!confirmar) return
+
+    await supabase.from('denuncias').delete().eq('id', id)
+    await carregarDenuncias()
   }
 
   if (!sessionChecked) {
@@ -127,17 +135,31 @@ export default function AdminDenunciasPage() {
                     </div>
                   )}
 
-                  <div className="mt-4">
+                  <div className="mt-4 flex gap-4">
                     <button
                       onClick={() => excluirAvaliacao(d.avaliacoes.id)}
                       className="px-4 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
                     >
                       Excluir Avaliação
                     </button>
+                    <button
+                      onClick={() => excluirDenuncia(d.id)}
+                      className="px-4 py-1 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 text-sm"
+                    >
+                      Remover Denúncia
+                    </button>
                   </div>
                 </>
               ) : (
-                <p className="text-sm text-red-600">Avaliação não encontrada (pode ter sido excluída).</p>
+                <>
+                  <p className="text-sm text-red-600">Avaliação não encontrada (pode ter sido excluída).</p>
+                  <button
+                    onClick={() => excluirDenuncia(d.id)}
+                    className="mt-2 px-4 py-1 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 text-sm"
+                  >
+                    Remover Denúncia
+                  </button>
+                </>
               )}
             </div>
           ))}
