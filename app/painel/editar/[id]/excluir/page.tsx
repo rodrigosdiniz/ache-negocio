@@ -1,50 +1,59 @@
-import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
-import { cookies } from 'next/headers'
+'use client'
 
-export default async function ExcluirEmpresaPage({ params }: { params: { id: string } }) {
-  const supabase = createClient(cookies())
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return redirect('/login')
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase'
 
-  const { data: empresa, error } = await supabase
-    .from('empresas')
-    .select('id, nome, user_id')
-    .eq('id', params.id)
-    .single()
+export default function ExcluirEmpresa({ params }: { params: { id: string } }) {
+  const [empresaNome, setEmpresaNome] = useState<string>('')
+  const [carregando, setCarregando] = useState(true)
+  const router = useRouter()
 
-  if (!empresa || empresa.user_id !== user.id) {
-    return redirect('/painel')
+  useEffect(() => {
+    const carregar = async () => {
+      const { data } = await supabase.from('empresas').select('nome').eq('id', params.id).single()
+      if (data?.nome) setEmpresaNome(data.nome)
+      setCarregando(false)
+    }
+    carregar()
+  }, [params.id])
+
+  const excluir = async () => {
+    const res = await fetch('/api/empresa/excluir', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: params.id })
+    })
+
+    if (res.ok) {
+      alert('Empresa excluída com sucesso.')
+      router.push('/painel')
+    } else {
+      alert('Erro ao excluir a empresa.')
+    }
   }
 
-  const excluirEmpresa = async () => {
-    'use server'
-    const supabase = createClient()
-    await supabase.from('empresas').delete().eq('id', params.id)
-    cookies().set('toast', 'Empresa excluída com sucesso.')
-    redirect('/painel')
+  if (carregando) {
+    return <p className="text-center text-sm text-gray-600 py-10">Carregando...</p>
   }
 
   return (
-    <main className="max-w-xl mx-auto px-4 py-10">
-      <h1 className="text-2xl font-bold mb-6">Excluir Empresa</h1>
-      <p className="mb-4">
-        Tem certeza que deseja excluir a empresa <strong>{empresa.nome}</strong>? Essa ação é <span className="text-red-600 font-semibold">irreversível</span>.
-      </p>
-      <form action={excluirEmpresa}>
-        <button
-          type="submit"
-          className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-        >
-          Confirmar Exclusão
-        </button>
-        <a
-          href="/painel"
-          className="ml-4 text-blue-600 underline"
-        >
-          Cancelar
-        </a>
-      </form>
+    <main className="max-w-2xl mx-auto px-4 py-10">
+      <h1 className="text-2xl font-bold mb-4">Excluir Empresa</h1>
+      <p className="mb-6">Tem certeza que deseja excluir a empresa <strong>{empresaNome}</strong>? Esta ação é irreversível.</p>
+
+      <button
+        onClick={excluir}
+        className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 mr-4"
+      >
+        Confirmar Exclusão
+      </button>
+      <button
+        onClick={() => router.push('/painel')}
+        className="bg-gray-300 text-black px-4 py-2 rounded hover:bg-gray-400"
+      >
+        Cancelar
+      </button>
     </main>
   )
 }
