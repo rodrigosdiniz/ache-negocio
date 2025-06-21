@@ -1,71 +1,137 @@
-// Caminho: app/empresa/[id]/page.tsx
+'use client'
 
+import { useEffect, useState } from 'react'
+import { useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
-import Image from 'next/image'
 import { Star } from 'lucide-react'
+import Link from 'next/link'
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-  const { data } = await supabase.from('empresas').select('nome, cidade').eq('id', params.id).single()
-  return {
-    title: `${data?.nome} em ${data?.cidade} | Ache Negócio`,
-    description: `Veja informações da empresa ${data?.nome} localizada em ${data?.cidade}.`
+interface Empresa {
+  id: string
+  nome: string
+  cidade: string
+  estado: string
+  categoria: string
+  descricao?: string
+  endereco?: string
+  nota_media: number | null
+}
+
+export const metadata: Metadata = {
+  title: 'Perfil da Empresa | Ache Negócio',
+  description: 'Detalhes e avaliações de empresas cadastradas no Ache Negócio.',
+  openGraph: {
+    title: 'Perfil da Empresa | Ache Negócio',
+    type: 'website'
   }
 }
 
-export default async function EmpresaPage({ params }: { params: { id: string } }) {
-  const { data: empresa } = await supabase
-    .from('empresas')
-    .select('*')
-    .eq('id', params.id)
-    .single()
+export default function EmpresaPage() {
+  const params = useParams()
+  const id = params?.id as string
+  const [empresa, setEmpresa] = useState<Empresa | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  if (!empresa) return notFound()
+  useEffect(() => {
+    const carregar = async () => {
+      const { data } = await supabase
+        .from('empresas')
+        .select('*')
+        .eq('id', id)
+        .single()
 
-  const googleMapsUrl = `https://www.google.com/maps?q=${encodeURIComponent(
-    `${empresa.endereco || ''}, ${empresa.cidade || ''}`
-  )}`
+      setEmpresa(data)
+      setLoading(false)
+    }
+
+    if (id) carregar()
+  }, [id])
+
+  if (loading) {
+    return <p className="text-center py-10 text-sm text-gray-600">Carregando empresa...</p>
+  }
+
+  if (!empresa) {
+    return <p className="text-center py-10 text-sm text-red-600">Empresa não encontrada.</p>
+  }
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-10">
       <h1 className="text-3xl font-bold mb-4">{empresa.nome}</h1>
-      <p className="text-gray-600">{empresa.categoria} em {empresa.cidade}</p>
+      <p className="text-gray-600 text-sm mb-2">
+        {empresa.cidade}, {empresa.estado} · {empresa.categoria}
+      </p>
+      {empresa.nota_media !== null && (
+        <p className="flex items-center gap-1 text-yellow-600 mb-4">
+          <Star className="w-5 h-5 fill-yellow-500" /> {empresa.nota_media.toFixed(1)} / 5
+        </p>
+      )}
 
-      {empresa.nota_media && (
-        <div className="mt-2 flex items-center text-yellow-600 text-sm">
-          <Star className="w-4 h-4 fill-yellow-500" />
-          <span className="ml-1">{empresa.nota_media.toFixed(1)} / 5</span>
+      {empresa.descricao && (
+        <p className="text-gray-700 leading-relaxed mb-6 whitespace-pre-line">
+          {empresa.descricao}
+        </p>
+      )}
+
+      {empresa.endereco && (
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold mb-1">Endereço</h2>
+          <p className="text-gray-700 text-sm mb-2">{empresa.endereco}</p>
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(empresa.endereco)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline text-sm"
+          >
+            Ver no mapa
+          </a>
         </div>
       )}
 
-      {empresa.imagem_url && (
-        <Image
-          src={empresa.imagem_url}
-          alt={empresa.nome}
-          width={600}
-          height={400}
-          className="rounded mt-6"
-        />
-      )}
+      <div className="flex flex-wrap gap-4 mb-6">
+        <Link
+          href={`/empresa/${empresa.id}/avaliar`}
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
+        >
+          Avaliar esta empresa
+        </Link>
 
-      <div className="mt-6 space-y-2 text-sm">
-        {empresa.descricao && <p><strong>Sobre:</strong> {empresa.descricao}</p>}
-        {empresa.telefone && <p><strong>Telefone:</strong> {empresa.telefone}</p>}
-        {empresa.email && <p><strong>Email:</strong> {empresa.email}</p>}
-        {empresa.endereco && <p><strong>Endereço:</strong> {empresa.endereco}</p>}
-      </div>
-
-      <div className="mt-6">
         <a
-          href={googleMapsUrl}
+          href={`https://wa.me/?text=${encodeURIComponent(`Conheça a empresa ${empresa.nome} em ${empresa.cidade}/${empresa.estado}: https://ache-negocio.com.br/empresa/${empresa.id}`)}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm"
         >
-          Ver no mapa
+          Compartilhar no WhatsApp
+        </a>
+
+        <a
+          href={`https://www.facebook.com/sharer/sharer.php?u=https://ache-negocio.com.br/empresa/${empresa.id}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="bg-blue-800 text-white px-4 py-2 rounded hover:bg-blue-900 text-sm"
+        >
+          Compartilhar no Facebook
         </a>
       </div>
+
+      <script type="application/ld+json">
+        {JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'LocalBusiness',
+          name: empresa.nome,
+          address: empresa.endereco,
+          aggregateRating: empresa.nota_media && {
+            '@type': 'AggregateRating',
+            ratingValue: empresa.nota_media.toFixed(1),
+            bestRating: '5',
+            worstRating: '1'
+          },
+          url: `https://ache-negocio.com.br/empresa/${empresa.id}`,
+          image: `https://ache-negocio.com.br/api/og?title=${encodeURIComponent(empresa.nome)}`
+        })}
+      </script>
     </main>
   )
 }
