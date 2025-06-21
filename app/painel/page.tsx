@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 import { Star, Pencil, Trash2 } from 'lucide-react'
+import { toast } from 'react-hot-toast'
 
 interface Empresa {
   id: string
@@ -63,11 +64,11 @@ export default function DashboardPerfil() {
     setExcluindoId(null)
 
     if (res.ok) {
-      alert(`Empresa "${nome}" excluída com sucesso.`)
+      toast.success(`Empresa "${nome}" excluída com sucesso.`)
       setEmpresas(empresas => empresas.filter(e => e.id !== id))
     } else {
       const erro = await res.json()
-      alert(`Erro ao excluir a empresa: ${erro?.message || 'Erro desconhecido.'}`)
+      toast.error(`Erro ao excluir: ${erro?.message || 'Erro desconhecido.'}`)
     }
   }
 
@@ -122,4 +123,28 @@ export default function DashboardPerfil() {
                   <div className="flex flex-col items-end gap-2">
                     <Link
                       href={`/painel/editar/${empresa.id}`}
-                      className="text-sm text-blue-600 hover:underline flex items-center ga
+                      className="text-sm text-blue-600 hover:underline flex items-center gap-1"
+                    >
+                      <Pencil className="w-4 h-4" /> Editar
+                    </Link>
+                    <button
+                      onClick={() => excluirEmpresa(empresa.id, empresa.nome)}
+                      disabled={excluindoId === empresa.id}
+                      className={`text-sm flex items-center gap-1 ${
+                        excluindoId === empresa.id
+                          ? 'text-gray-400 cursor-not-allowed'
+                          : 'text-red-600 hover:underline'
+                      }`}
+                    >
+                      <Trash2 className="w-4 h-4" /> {excluindoId === empresa.id ? 'Excluindo...' : 'Excluir'}
+                    </button>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </main>
+  )
+}
