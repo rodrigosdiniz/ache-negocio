@@ -10,14 +10,25 @@ import { Toast } from '@/components/ui/toast'
 import { Award, Star } from 'lucide-react'
 import { motion } from 'framer-motion'
 import FormAvaliacao from '@/components/FormAvaliacao'
-import RespostaAvaliacao from '@/components/RespostaAvaliacao'
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const supabase = createClient(cookies())
-  const { data } = await supabase.from('empresas').select('nome, cidade').eq('id', params.id).single()
+  const { data } = await supabase.from('empresas').select('nome, cidade, categoria, descricao').eq('id', params.id).single()
+
   return {
     title: `${data?.nome} em ${data?.cidade} | Ache Negócio`,
-    description: `Encontre ${data?.nome}, localizada em ${data?.cidade}. Veja informações, contato e avaliações.`
+    description: data?.descricao || `Confira ${data?.nome}, ${data?.categoria} em ${data?.cidade}. Veja avaliações e entre em contato.`,
+    openGraph: {
+      title: `${data?.nome} | Ache Negócio`,
+      description: data?.descricao || '',
+      images: data?.imagem_url ? [data.imagem_url] : []
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${data?.nome} | Ache Negócio`,
+      description: data?.descricao || '',
+      images: data?.imagem_url ? [data.imagem_url] : []
+    }
   }
 }
 
@@ -82,7 +93,13 @@ export default async function EmpresaPage({ params, searchParams }: { params: { 
       <Link href="/empresas" className="text-blue-600 underline mb-4 inline-block">← Voltar</Link>
 
       {empresa.imagem_url && (
-        <Image src={empresa.imagem_url} alt={empresa.nome} width={600} height={300} className="rounded-xl mb-6 w-full object-cover" />
+        <Image
+          src={empresa.imagem_url}
+          alt={`Imagem da empresa ${empresa.nome}`}
+          width={800}
+          height={400}
+          className="rounded-xl mb-6 w-full object-cover shadow-md"
+        />
       )}
 
       <h1 className="text-3xl font-bold mb-1 flex items-center gap-2">
@@ -102,9 +119,9 @@ export default async function EmpresaPage({ params, searchParams }: { params: { 
         </div>
       )}
 
-      <p className="mb-4">{empresa.descricao}</p>
+      <p className="mb-6 text-gray-800 leading-relaxed whitespace-pre-line">{empresa.descricao}</p>
 
-      <div className="mb-6 space-y-1">
+      <div className="mb-6 space-y-1 text-sm">
         <p><strong>Telefone:</strong> {empresa.telefone}</p>
         <p><strong>Email:</strong> {empresa.email}</p>
         {empresa.website && (
@@ -117,18 +134,17 @@ export default async function EmpresaPage({ params, searchParams }: { params: { 
         )}
       </div>
 
-      {/* Lista de avaliações */}
-      <div className="mt-6">
-        <h2 className="text-xl font-semibold mb-2">Avaliações (página {page})</h2>
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold mb-3">Avaliações (página {page})</h2>
         {avaliacoes?.length === 0 ? (
           <p className="text-sm text-gray-600">Nenhuma avaliação ainda.</p>
         ) : (
-          <ul className="space-y-2">
+          <ul className="space-y-3">
             {avaliacoes.map((a, i) => (
-              <li key={i} className="border p-4 rounded">
+              <li key={i} className="border p-4 rounded shadow-sm">
                 {renderStars(a.nota)}
-                <p className="mt-1">{a.comentario}</p>
-                <p className="text-sm text-gray-500">Avaliado por {a.user?.full_name || 'usuário'} em {new Date(a.created_at).toLocaleDateString()}</p>
+                <p className="mt-1 text-gray-800">{a.comentario}</p>
+                <p className="text-xs text-gray-500">Avaliado por {a.user?.full_name || 'usuário'} em {new Date(a.created_at).toLocaleDateString()}</p>
 
                 {a.resposta && (
                   <div className="mt-3 p-3 border-l-4 border-blue-500 bg-blue-50">
@@ -137,9 +153,16 @@ export default async function EmpresaPage({ params, searchParams }: { params: { 
                   </div>
                 )}
 
-                {user?.id === empresa.user_id && !a.resposta && (
-                  <div className="mt-4">
-                    <RespostaAvaliacao avaliacaoId={a.id} />
+                {user?.id === a.user_id && (
+                  <div className="flex gap-3 mt-2">
+                    <form action="/api/avaliacoes/editar" method="POST">
+                      <input type="hidden" name="id" value={a.id} />
+                      <button type="submit" className="text-sm text-blue-600 underline">Editar</button>
+                    </form>
+                    <form action="/api/avaliacoes/excluir" method="POST" onSubmit={(e) => !confirm('Excluir esta avaliação?') && e.preventDefault()}>
+                      <input type="hidden" name="id" value={a.id} />
+                      <button type="submit" className="text-sm text-red-600 underline">Excluir</button>
+                    </form>
                   </div>
                 )}
               </li>
@@ -153,7 +176,6 @@ export default async function EmpresaPage({ params, searchParams }: { params: { 
         </div>
       </div>
 
-      {/* Formulário de avaliação */}
       {user && (
         <FormAvaliacao
           empresaId={empresa.id}
