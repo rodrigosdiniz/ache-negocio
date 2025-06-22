@@ -1,28 +1,41 @@
 // app/api/contato/route.ts
-import { Resend } from 'resend'
 import { NextResponse } from 'next/server'
-
-const resend = new Resend(process.env.RESEND_API_KEY)
+import { resend } from '@/lib/resend' // 🔁 Usa o helper centralizado
 
 export async function POST(req: Request) {
-  const { nome, email, mensagem } = await req.json()
-
   try {
+    const { nome, email, mensagem } = await req.json()
+
+    if (!nome || !email || !mensagem) {
+      return NextResponse.json(
+        { status: 'erro', message: 'Todos os campos são obrigatórios' },
+        { status: 400 }
+      )
+    }
+
     const data = await resend.emails.send({
-      from: 'contato@seudominio.com.br',
+      from: 'contato@seudominio.com.br', // deve estar verificado na Resend
       to: 'voce@seudominio.com.br',
       subject: `Nova mensagem de contato - ${nome}`,
       html: `
-        <h1>Nova mensagem do formulário de contato</h1>
-        <p><strong>Nome:</strong> ${nome}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Mensagem:</strong><br/>${mensagem}</p>
+        <div style="font-family: sans-serif; font-size: 16px;">
+          <h2>Mensagem de contato</h2>
+          <p><strong>Nome:</strong> ${nome}</p>
+          <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Mensagem:</strong><br/>${mensagem}</p>
+        </div>
       `,
+      headers: {
+        'Reply-To': email
+      }
     })
 
     return NextResponse.json({ status: 'ok', data })
-  } catch (error) {
-    console.error('Erro ao enviar email:', error)
-    return NextResponse.json({ status: 'erro', message: 'Falha ao enviar e-mail' }, { status: 500 })
+  } catch (error: any) {
+    console.error('[CONTATO ERROR]', error)
+    return NextResponse.json(
+      { status: 'erro', message: 'Falha ao enviar e-mail' },
+      { status: 500 }
+    )
   }
 }
