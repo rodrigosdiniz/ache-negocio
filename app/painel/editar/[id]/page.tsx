@@ -21,6 +21,8 @@ export default function EditarEmpresaPage({ params }: { params: { id: string } }
   const [empresa, setEmpresa] = useState<Empresa | null>(null)
   const [novaImagem, setNovaImagem] = useState<File | null>(null)
   const [previewImagem, setPreviewImagem] = useState<string>('')
+  const [sugestaoCidade, setSugestaoCidade] = useState('')
+  const [sugestaoCategoria, setSugestaoCategoria] = useState('')
   const router = useRouter()
 
   useEffect(() => {
@@ -59,10 +61,28 @@ export default function EditarEmpresaPage({ params }: { params: { id: string } }
 
     if (error) {
       alert('Erro ao atualizar os dados.')
-    } else {
-      alert('Empresa atualizada com sucesso.')
-      router.push('/painel')
+      return
     }
+
+    // Enviar sugestões se preenchidas
+    if (sugestaoCidade.trim()) {
+      await supabase.from('sugestoes').insert({
+        tipo: 'cidade',
+        valor: sugestaoCidade.trim(),
+        usuario_id: (await supabase.auth.getUser()).data?.user?.id
+      })
+    }
+
+    if (sugestaoCategoria.trim()) {
+      await supabase.from('sugestoes').insert({
+        tipo: 'categoria',
+        valor: sugestaoCategoria.trim(),
+        usuario_id: (await supabase.auth.getUser()).data?.user?.id
+      })
+    }
+
+    alert('Empresa atualizada com sucesso.')
+    router.push('/painel')
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -92,6 +112,23 @@ export default function EditarEmpresaPage({ params }: { params: { id: string } }
         <input name="email" value={empresa.email} onChange={handleInputChange} className="w-full border p-2 rounded" placeholder="Email" />
         <input name="website" value={empresa.website} onChange={handleInputChange} className="w-full border p-2 rounded" placeholder="Website" />
 
+        {/* Sugestões */}
+        <hr className="my-4" />
+        <h2 className="font-semibold text-gray-700">Não encontrou sua cidade ou categoria?</h2>
+        <input
+          value={sugestaoCidade}
+          onChange={(e) => setSugestaoCidade(e.target.value)}
+          className="w-full border p-2 rounded"
+          placeholder="Sugira uma nova cidade"
+        />
+        <input
+          value={sugestaoCategoria}
+          onChange={(e) => setSugestaoCategoria(e.target.value)}
+          className="w-full border p-2 rounded"
+          placeholder="Sugira uma nova categoria"
+        />
+
+        {/* Imagem */}
         {empresa.imagem_url && !previewImagem && (
           <Image src={empresa.imagem_url} alt="Imagem atual" width={300} height={200} className="rounded" />
         )}
