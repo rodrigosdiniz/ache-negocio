@@ -1,4 +1,6 @@
-import { loadStripe, Stripe | null } from '@stripe/stripe-js'
+// lib/stripe/client.ts
+import { loadStripe } from '@stripe/stripe-js'
+import type { Stripe } from '@stripe/stripe-js'
 
 let stripePromise: Promise<Stripe | null>
 
