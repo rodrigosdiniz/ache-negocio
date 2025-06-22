@@ -1,38 +1,28 @@
-import { NextResponse } from 'next/server'
+// app/api/contato/route.ts
 import { Resend } from 'resend'
+import { NextResponse } from 'next/server'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(req: Request) {
-  const body = await req.json()
-  const { nome, email, mensagem } = body
-
-  if (!email || !mensagem) {
-    return NextResponse.json({ error: 'Campos obrigatórios faltando.' }, { status: 400 })
-  }
+  const { nome, email, mensagem } = await req.json()
 
   try {
-    const { data, error } = await resend.emails.send({
-      from: 'Ache Negócio <contato@emails.achenegocio.com.br>',
-      to: ['contato@achenegocio.com.br'],
-      subject: `Nova mensagem de ${nome || 'Visitante'}`,
-      reply_to: email,
+    const data = await resend.emails.send({
+      from: 'contato@seudominio.com.br',
+      to: 'voce@seudominio.com.br',
+      subject: `Nova mensagem de contato - ${nome}`,
       html: `
-        <p><strong>Nome:</strong> ${nome || 'Não informado'}</p>
+        <h1>Nova mensagem do formulário de contato</h1>
+        <p><strong>Nome:</strong> ${nome}</p>
         <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Mensagem:</strong></p>
-        <p>${mensagem.replace(/\n/g, '<br />')}</p>
-      `
+        <p><strong>Mensagem:</strong><br/>${mensagem}</p>
+      `,
     })
 
-    if (error) {
-      console.error(error)
-      return NextResponse.json({ error: 'Erro ao enviar e-mail.' }, { status: 500 })
-    }
-
-    return NextResponse.json({ success: true, data })
-  } catch (err) {
-    console.error(err)
-    return NextResponse.json({ error: 'Erro inesperado.' }, { status: 500 })
+    return NextResponse.json({ status: 'ok', data })
+  } catch (error) {
+    console.error('Erro ao enviar email:', error)
+    return NextResponse.json({ status: 'erro', message: 'Falha ao enviar e-mail' }, { status: 500 })
   }
 }
