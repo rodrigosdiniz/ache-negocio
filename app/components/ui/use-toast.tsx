@@ -19,8 +19,10 @@ export function useToast() {
     }, 3000)
   }, [])
 
-  const ToastComponent = () =>
-    isVisible ? (
+  const ToastComponent = () => {
+    if (!isVisible) return null
+
+    return (
       <div
         className={`fixed bottom-5 right-5 px-4 py-2 rounded text-white shadow-lg z-50 ${
           type === 'success'
@@ -32,7 +34,8 @@ export function useToast() {
       >
         {message}
       </div>
-    ) : null
+    )
+  }
 
   return { showToast, ToastComponent }
 }
