@@ -12,7 +12,7 @@
     "@googlemaps/js-api-loader": "^1.16.1",
     "@headlessui/react": "^1.7.15",
     "@radix-ui/react-toast": "^1.0.6",
-    "@stripe/stripe-js": "^1.64.0",
+    "@stripe/stripe-js": "^1.62.0",
     "@supabase/auth-helpers-nextjs": "^0.8.0",
     "clsx": "^1.2.1",
     "file-saver": "^2.0.5",
