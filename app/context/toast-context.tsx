@@ -1,24 +1,26 @@
+// app/context/toast-context.tsx
 'use client'
 
 import { createContext, useContext } from 'react'
 import { useToast } from '@/components/ui/use-toast'
 
-type ToastContextType = {
-  showToast: (message: string, type?: 'success' | 'error' | 'info') => void
-}
+const ToastContext = createContext<ReturnType<typeof useToast> | null>(null)
 
-const ToastContext = createContext<ToastContextType>({
-  showToast: () => {},
-})
-
-export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
-  const { showToast } = useToast()
+export function ToastProvider({ children }: { children: React.ReactNode }) {
+  const toast = useToast()
 
   return (
-    <ToastContext.Provider value={{ showToast }}>
+    <ToastContext.Provider value={toast}>
+      {toast.ToastComponent()}
       {children}
     </ToastContext.Provider>
   )
 }
 
-export const useToastContext = () => useContext(ToastContext)
+export function useToastContext() {
+  const context = useContext(ToastContext)
+  if (!context) {
+    throw new Error('useToastContext deve ser usado dentro do ToastProvider')
+  }
+  return context
+}
