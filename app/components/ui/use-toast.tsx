@@ -22,16 +22,15 @@ export function useToast() {
   const ToastComponent = () => {
     if (!isVisible) return null
 
+    const bgColor =
+      type === 'success'
+        ? 'bg-green-600'
+        : type === 'error'
+        ? 'bg-red-600'
+        : 'bg-blue-600'
+
     return (
-      <div
-        className={`fixed bottom-5 right-5 px-4 py-2 rounded text-white shadow-lg z-50 ${
-          type === 'success'
-            ? 'bg-green-600'
-            : type === 'error'
-            ? 'bg-red-600'
-            : 'bg-blue-600'
-        }`}
-      >
+      <div className={`fixed bottom-5 right-5 px-4 py-2 rounded text-white shadow-lg z-50 ${bgColor}`}>
         {message}
       </div>
     )
