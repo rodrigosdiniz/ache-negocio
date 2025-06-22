@@ -18,9 +18,11 @@
     "paths": {
       "@/components/*": ["app/components/*"],
       "@/lib/*": ["lib/*"],
-      "@/context/*": ["app/context/*"] // ✅ Adicionado
+      "@/context/*": ["app/context/*"]
     },
-    "plugins": [{ "name": "next" }]
+    "plugins": [
+      { "name": "next" }
+    ]
   },
   "include": [
     "next-env.d.ts",
