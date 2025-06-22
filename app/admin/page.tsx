@@ -1,54 +1,34 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { LayoutDashboard, Building2, Landmark, Flag, Tags, Users, ListChecks } from 'lucide-react'
 
-const EMAIL_ADMIN = 'contato@achenegocio.com.br'
-
-export default function AdminDashboardPage() {
-  const supabase = createClientComponentClient()
-  const [sessionChecked, setSessionChecked] = useState(false)
-  const [isAdmin, setIsAdmin] = useState(false)
-
-  useEffect(() => {
-    const checarAdmin = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      const email = session?.user?.email
-      setIsAdmin(email === EMAIL_ADMIN)
-      setSessionChecked(true)
-    }
-    checarAdmin()
-  }, [])
-
-  if (!sessionChecked) {
-    return <div className="p-8">Verificando permissão...</div>
-  }
-
-  if (!isAdmin) {
-    return <div className="p-8 text-red-600 font-semibold">Acesso restrito.</div>
-  }
-
-  const links = [
-    { href: '/admin/denuncias', label: 'Denúncias de Avaliações' },
-    { href: '/admin/avaliacoes', label: 'Todas as Avaliações' },
-    { href: '/admin/empresas', label: 'Empresas Cadastradas' },
-    { href: '/admin/planos', label: 'Planos e Assinaturas' },
-    { href: '/admin/usuarios', label: 'Usuários (futuro)' }
-  ]
-
+export default function AdminPage() {
   return (
-    <div className="max-w-4xl mx-auto py-10 px-4">
-      <h1 className="text-3xl font-bold mb-6">Painel Administrativo</h1>
-      <div className="grid gap-4 sm:grid-cols-2">
-        {links.map((link) => (
-          <Link key={link.href} href={link.href}>
-            <div className="border rounded-xl p-6 bg-white shadow hover:shadow-md hover:bg-gray-50 cursor-pointer transition">
-              <h2 className="text-lg font-semibold text-blue-600">{link.label}</h2>
-              <p className="text-sm text-gray-500 mt-1">Acessar {link.label.toLowerCase()}</p>
-            </div>
-          </Link>
-        ))}
+    <div className="max-w-3xl mx-auto px-4 py-10">
+      <h1 className="text-2xl font-bold mb-6">Painel Administrativo</h1>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Link href="/admin/empresas" className="flex items-center gap-3 p-4 border rounded hover:bg-gray-50">
+          <Building2 className="w-5 h-5" /> Empresas
+        </Link>
+        <Link href="/admin/usuarios" className="flex items-center gap-3 p-4 border rounded hover:bg-gray-50">
+          <Users className="w-5 h-5" /> Usuários
+        </Link>
+        <Link href="/admin/planos" className="flex items-center gap-3 p-4 border rounded hover:bg-gray-50">
+          <ListChecks className="w-5 h-5" /> Planos
+        </Link>
+        <Link href="/admin/denuncias" className="flex items-center gap-3 p-4 border rounded hover:bg-gray-50">
+          <Flag className="w-5 h-5" /> Denúncias
+        </Link>
+        <Link href="/admin/categorias" className="flex items-center gap-3 p-4 border rounded hover:bg-gray-50">
+          <Tags className="w-5 h-5" /> Categorias
+        </Link>
+        <Link href="/admin/cidades" className="flex items-center gap-3 p-4 border rounded hover:bg-gray-50">
+          <Landmark className="w-5 h-5" /> Cidades
+        </Link>
+        <Link href="/admin/sugestoes" className="flex items-center gap-3 p-4 border rounded hover:bg-gray-50">
+          <LayoutDashboard className="w-5 h-5" /> Sugestões
+        </Link>
       </div>
     </div>
   )
