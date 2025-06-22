@@ -12,6 +12,7 @@ export default function AdminSugestoesPage() {
   const [carregando, setCarregando] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
   const [verificando, setVerificando] = useState(true)
+  const [filtroStatus, setFiltroStatus] = useState<'pendente' | 'aprovado' | 'rejeitado'>('pendente')
 
   useEffect(() => {
     const verificarAdmin = async () => {
@@ -28,7 +29,7 @@ export default function AdminSugestoesPage() {
     const { data } = await supabase
       .from('sugestoes')
       .select('*')
-      .eq('status', 'pendente')
+      .eq('status', filtroStatus)
       .order('criado_em', { ascending: false })
     setSugestoes(data || [])
     setCarregando(false)
@@ -36,7 +37,7 @@ export default function AdminSugestoesPage() {
 
   useEffect(() => {
     if (isAdmin) carregarSugestoes()
-  }, [isAdmin])
+  }, [isAdmin, filtroStatus])
 
   const aprovarSugestao = async (sugestao: any) => {
     const tabela = sugestao.tipo === 'cidade' ? 'cidades' : 'categorias'
@@ -55,14 +56,26 @@ export default function AdminSugestoesPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">Sugestões Pendentes</h1>
+      <h1 className="text-2xl font-bold mb-6">Sugestões</h1>
+
+      <div className="flex gap-2 mb-4">
+        <button onClick={() => setFiltroStatus('pendente')} className={`px-3 py-1 rounded ${filtroStatus === 'pendente' ? 'bg-blue-600 text-white' : 'bg-gray-100'}`}>
+          Pendentes
+        </button>
+        <button onClick={() => setFiltroStatus('aprovado')} className={`px-3 py-1 rounded ${filtroStatus === 'aprovado' ? 'bg-green-600 text-white' : 'bg-gray-100'}`}>
+          Aprovadas
+        </button>
+        <button onClick={() => setFiltroStatus('rejeitado')} className={`px-3 py-1 rounded ${filtroStatus === 'rejeitado' ? 'bg-red-600 text-white' : 'bg-gray-100'}`}>
+          Rejeitadas
+        </button>
+      </div>
 
       {carregando ? (
         <div className="flex justify-center py-10">
           <Loader2 className="animate-spin w-6 h-6 text-gray-600" />
         </div>
       ) : sugestoes.length === 0 ? (
-        <p className="text-gray-600">Nenhuma sugestão pendente.</p>
+        <p className="text-gray-600">Nenhuma sugestão encontrada.</p>
       ) : (
         <ul className="divide-y">
           {sugestoes.map((s) => (
@@ -71,22 +84,24 @@ export default function AdminSugestoesPage() {
                 <p className="font-semibold text-sm">{s.valor}</p>
                 <p className="text-xs text-gray-500">{s.tipo} — sugerido em {new Date(s.criado_em).toLocaleDateString()}</p>
               </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => aprovarSugestao(s)}
-                  className="text-green-600 hover:text-green-800"
-                  aria-label="Aprovar"
-                >
-                  <Check />
-                </button>
-                <button
-                  onClick={() => rejeitarSugestao(s.id)}
-                  className="text-red-600 hover:text-red-800"
-                  aria-label="Rejeitar"
-                >
-                  <X />
-                </button>
-              </div>
+              {filtroStatus === 'pendente' && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => aprovarSugestao(s)}
+                    className="text-green-600 hover:text-green-800"
+                    aria-label="Aprovar"
+                  >
+                    <Check />
+                  </button>
+                  <button
+                    onClick={() => rejeitarSugestao(s.id)}
+                    className="text-red-600 hover:text-red-800"
+                    aria-label="Rejeitar"
+                  >
+                    <X />
+                  </button>
+                </div>
+              )}
             </li>
           ))}
         </ul>
