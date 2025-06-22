@@ -17,7 +17,8 @@
     "baseUrl": ".",
     "paths": {
       "@/components/*": ["app/components/*"],
-      "@/lib/*": ["lib/*"]
+      "@/lib/*": ["lib/*"],
+      "@/context/*": ["app/context/*"] // ✅ Adicionado
     },
     "plugins": [{ "name": "next" }]
   },
