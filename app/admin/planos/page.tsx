@@ -76,3 +76,7 @@ export default function AdminPlanosPage() {
               <tr key={u.id}>
                 <td className="p-2 border text-blue-700">{u.email}</td>
                 <td className="p-2 border">{u.plano}</td>
+                <td className="p-2 border">
+                  {new Date(u.created_at).toLocaleString('pt-BR')}
+                </td>
+              </tr>
