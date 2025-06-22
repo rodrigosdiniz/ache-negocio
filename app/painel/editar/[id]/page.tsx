@@ -33,6 +33,12 @@ export default function EditarEmpresaPage({ params }: { params: { id: string } }
     carregarEmpresa()
   }, [params.id])
 
+  const enviarSugestao = async (tipo: 'cidade' | 'categoria', valor: string) => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.user?.id) return
+    await supabase.from('sugestoes').insert({ usuario_id: session.user.id, tipo, valor })
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!empresa) return
@@ -57,29 +63,10 @@ export default function EditarEmpresaPage({ params }: { params: { id: string } }
       imagem_url = publicUrl.publicUrl
     }
 
-    const { error } = await supabase.from('empresas').update({ ...empresa, imagem_url }).eq('id', empresa.id)
+    await supabase.from('empresas').update({ ...empresa, imagem_url }).eq('id', empresa.id)
 
-    if (error) {
-      alert('Erro ao atualizar os dados.')
-      return
-    }
-
-    // Enviar sugestões se preenchidas
-    if (sugestaoCidade.trim()) {
-      await supabase.from('sugestoes').insert({
-        tipo: 'cidade',
-        valor: sugestaoCidade.trim(),
-        usuario_id: (await supabase.auth.getUser()).data?.user?.id
-      })
-    }
-
-    if (sugestaoCategoria.trim()) {
-      await supabase.from('sugestoes').insert({
-        tipo: 'categoria',
-        valor: sugestaoCategoria.trim(),
-        usuario_id: (await supabase.auth.getUser()).data?.user?.id
-      })
-    }
+    if (sugestaoCidade.trim()) await enviarSugestao('cidade', sugestaoCidade.trim())
+    if (sugestaoCategoria.trim()) await enviarSugestao('categoria', sugestaoCategoria.trim())
 
     alert('Empresa atualizada com sucesso.')
     router.push('/painel')
@@ -107,28 +94,28 @@ export default function EditarEmpresaPage({ params }: { params: { id: string } }
         <input name="nome" value={empresa.nome} onChange={handleInputChange} className="w-full border p-2 rounded" placeholder="Nome" />
         <input name="cidade" value={empresa.cidade} onChange={handleInputChange} className="w-full border p-2 rounded" placeholder="Cidade" />
         <input name="categoria" value={empresa.categoria} onChange={handleInputChange} className="w-full border p-2 rounded" placeholder="Categoria" />
+
+        <div className="bg-gray-50 p-3 rounded border text-sm">
+          <p className="mb-2 font-medium">Não encontrou sua cidade ou categoria?</p>
+          <input
+            value={sugestaoCidade}
+            onChange={(e) => setSugestaoCidade(e.target.value)}
+            placeholder="Sugerir nova cidade (opcional)"
+            className="w-full mb-2 border p-2 rounded"
+          />
+          <input
+            value={sugestaoCategoria}
+            onChange={(e) => setSugestaoCategoria(e.target.value)}
+            placeholder="Sugerir nova categoria (opcional)"
+            className="w-full border p-2 rounded"
+          />
+        </div>
+
         <textarea name="descricao" value={empresa.descricao} onChange={handleInputChange} className="w-full border p-2 rounded" placeholder="Descrição" />
         <input name="telefone" value={empresa.telefone} onChange={handleInputChange} className="w-full border p-2 rounded" placeholder="Telefone" />
         <input name="email" value={empresa.email} onChange={handleInputChange} className="w-full border p-2 rounded" placeholder="Email" />
         <input name="website" value={empresa.website} onChange={handleInputChange} className="w-full border p-2 rounded" placeholder="Website" />
 
-        {/* Sugestões */}
-        <hr className="my-4" />
-        <h2 className="font-semibold text-gray-700">Não encontrou sua cidade ou categoria?</h2>
-        <input
-          value={sugestaoCidade}
-          onChange={(e) => setSugestaoCidade(e.target.value)}
-          className="w-full border p-2 rounded"
-          placeholder="Sugira uma nova cidade"
-        />
-        <input
-          value={sugestaoCategoria}
-          onChange={(e) => setSugestaoCategoria(e.target.value)}
-          className="w-full border p-2 rounded"
-          placeholder="Sugira uma nova categoria"
-        />
-
-        {/* Imagem */}
         {empresa.imagem_url && !previewImagem && (
           <Image src={empresa.imagem_url} alt="Imagem atual" width={300} height={200} className="rounded" />
         )}
