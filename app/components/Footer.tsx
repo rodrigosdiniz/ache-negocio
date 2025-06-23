@@ -1,4 +1,4 @@
-import { Instagram, Facebook, Phone } from 'lucide-react'
+import { FaInstagram, FaFacebookF, FaWhatsapp } from 'react-icons/fa'
 
 export default function Footer() {
   return (
@@ -12,27 +12,27 @@ export default function Footer() {
           href="https://instagram.com/nexu.sengenharia1"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-2 hover:underline hover:text-blue-700 transition-colors"
+          className="flex items-center gap-2 hover:text-pink-600 transition-colors"
         >
-          <Instagram size={18} /> Instagram
+          <FaInstagram size={18} /> Instagram
         </a>
 
         <a
           href="https://www.facebook.com/profile.php?id=61568743817647"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-2 hover:underline hover:text-blue-700 transition-colors"
+          className="flex items-center gap-2 hover:text-blue-700 transition-colors"
         >
-          <Facebook size={18} /> Facebook
+          <FaFacebookF size={18} /> Facebook
         </a>
 
         <a
           href="https://wa.me/5521977814334"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-2 hover:underline hover:text-blue-700 transition-colors"
+          className="flex items-center gap-2 hover:text-green-600 transition-colors"
         >
-          <Phone size={18} /> WhatsApp
+          <FaWhatsapp size={18} /> WhatsApp
         </a>
       </div>
     </footer>
