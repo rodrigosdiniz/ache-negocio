@@ -30,7 +30,10 @@ export function useToast() {
         : 'bg-blue-600'
 
     return (
-      <div className={`fixed bottom-5 right-5 px-4 py-2 rounded text-white shadow-lg z-50 ${bgColor}`}>
+      <div
+        className={`fixed bottom-5 right-5 px-4 py-2 rounded text-white shadow-lg z-50 ${bgColor}`}
+        role="alert"
+      >
         {message}
       </div>
     )
