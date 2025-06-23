@@ -1,6 +1,6 @@
 import { Metadata } from 'next'
-import { buscarCategoriasPopulares } from '@/lib/supabase/categorias'
-import { CategoriasPopulares } from '@/components/CategoriasPopulares'
+import { buscarCategoriasPopulares } from '../lib/supabase/categorias'
+import { CategoriasPopulares } from '../components/CategoriasPopulares'
 
 export const metadata: Metadata = {
   title: 'Ache Negócio | Encontre Empresas de Qualquer Setor',
