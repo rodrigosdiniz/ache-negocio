@@ -16,6 +16,5 @@ export const config = {
     '/painel/:path*',
     '/admin/:path*',
     '/empresa/cadastrar',
-    // adicione outras rotas privadas aqui
   ],
 }
