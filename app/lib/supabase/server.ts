@@ -1,4 +1,3 @@
-// NÃO use 'use server' aqui
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 
