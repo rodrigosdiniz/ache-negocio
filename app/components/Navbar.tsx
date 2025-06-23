@@ -1,29 +1,21 @@
 'use client'
 
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { useTheme } from 'next-themes'
+import { Moon, Sun } from 'lucide-react'
 
 export default function Navbar() {
+  const { theme, setTheme } = useTheme()
+
   return (
-    <motion.nav
-      className="bg-white shadow-md sticky top-0 z-50"
-      initial={{ y: -50, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-        <Link href="/" className="text-2xl font-bold text-primary">
-          Ache<span className="text-blue-600">Negócio</span>
+    <header className="bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+        {/* Logo */}
+        <Link href="/" className="text-xl font-bold text-blue-600 dark:text-blue-400">
+          AcheNegócio
         </Link>
-        <div className="space-x-4">
-          <Link href="/login" className="text-gray-700 hover:text-blue-600 font-medium">
-            Entrar
-          </Link>
-          <Link href="/cadastro" className="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition">
-            Cadastrar empresa
-          </Link>
-        </div>
-      </div>
-    </motion.nav>
-  )
-}
+
+        {/* Menu */}
+        <nav className="flex items-center gap-6 text-sm">
+          <Link href="/empresas" className="hover:text-blue-600 transition-colors">Empresas</Link>
+          <Link href="/paine
