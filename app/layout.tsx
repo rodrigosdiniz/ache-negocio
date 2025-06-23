@@ -1,5 +1,5 @@
 // app/layout.tsx
-import "@/styles/globals.css";
+import "../globals.css"; // Caminho corrigido para o CSS global
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import Navbar from "@/components/Navbar";
