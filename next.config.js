@@ -2,11 +2,31 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    domains: [
-      'files.stripe.com',
-      'lh3.googleusercontent.com', // caso use login com Google
-      'jcnvpcjgydavwmedtdih.supabase.co', // imagens do Supabase
-      'cdn.resend.com', // se usar Resend com imagens
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'files.stripe.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'jcnvpcjgydavwmedtdih.supabase.co',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'cdn.resend.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
   env: {
