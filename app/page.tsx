@@ -1,29 +1,18 @@
-import { Metadata } from 'next'
-import { buscarCategoriasPopulares } from './lib/supabase/categorias'
-import { CategoriasPopulares } from './components/CategoriasPopulares'
-
-export const metadata: Metadata = {
-  title: 'Ache Negócio | Encontre Empresas de Qualquer Setor',
-  description:
-    'Busque empresas por cidade, categoria ou nome. Avalie serviços, encontre contatos e destaque seu negócio com nosso diretório inteligente.',
-}
+import { buscarCategoriasPopulares } from '@/lib/supabase/categorias'
 
 export default async function Home() {
   const categorias = await buscarCategoriasPopulares()
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-start p-6 md:p-12">
-      <div className="max-w-5xl w-full text-center mt-20">
-        <h1 className="text-4xl md:text-6xl font-bold text-primary mb-6 animate-fade-in">
-          Encontre empresas em qualquer cidade ou setor
-        </h1>
-        <p className="text-lg md:text-xl text-muted-foreground mb-10 animate-fade-in delay-100">
-          Compare avaliações, entre em contato e descubra os melhores serviços perto de você.
-        </p>
-      </div>
-
-      {/* Seção de Categorias Populares */}
-      <CategoriasPopulares categorias={categorias} />
-    </main>
+    <div>
+      <h1>Categorias Populares</h1>
+      <ul>
+        {categorias.map((c) => (
+          <li key={c.categoria}>
+            {c.categoria} ({c.count})
+          </li>
+        ))}
+      </ul>
+    </div>
   )
 }
