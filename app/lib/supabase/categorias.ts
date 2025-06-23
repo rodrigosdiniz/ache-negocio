@@ -1,3 +1,4 @@
+// app/lib/supabase/categorias.ts
 'use server'
 
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
@@ -5,7 +6,6 @@ import { cookies } from 'next/headers'
 
 export async function buscarCategoriasPopulares() {
   const supabase = createServerComponentClient({ cookies })
-
   const { data, error } = await supabase
     .from('empresas')
     .select('categoria, count:categoria')
