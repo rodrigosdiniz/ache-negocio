@@ -1,23 +1,19 @@
-// app/layout.tsx
 import './globals.css'
-import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-import { ToastProvider } from '@/context/toast-context'
+import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
 
-const inter = Inter({ subsets: ['latin'] })
-
-export const metadata: Metadata = {
-  title: 'Ache Negócio',
-  description: 'Plataforma SaaS de anúncios empresariais',
+export const metadata = {
+  title: 'AcheNegócio',
+  description: 'O melhor lugar para encontrar empresas e serviços perto de você',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-br">
-      <body className={inter.className}>
-        <ToastProvider>
-          {children}
-        </ToastProvider>
+    <html lang="pt-BR">
+      <body>
+        <Navbar />
+        <main>{children}</main>
+        <Footer />
       </body>
     </html>
   )
