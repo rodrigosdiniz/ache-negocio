@@ -1,22 +1,13 @@
-// app/lib/supabase/categorias.ts
 'use server'
 
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { supabase } from './server' // ou './client', dependendo do contexto
 
 export async function buscarCategoriasPopulares() {
-  const supabase = createServerComponentClient({ cookies })
-  const { data, error } = await supabase
-    .from('empresas')
-    .select('categoria, count:categoria')
-    .group('categoria')
-    .order('count', { ascending: false })
-    .limit(8)
+  const { data, error } = await supabase.rpc('categorias_populares');
 
   if (error) {
-    console.error('Erro ao buscar categorias:', error)
-    return []
+    throw new Error("Erro ao buscar categorias: " + error.message);
   }
 
-  return data
+  return data as { categoria: string; count: number }[];
 }
