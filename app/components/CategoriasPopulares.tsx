@@ -1,4 +1,3 @@
-// app/components/CategoriasPopulares.tsx
 'use client'
 
 import Link from 'next/link'
@@ -14,7 +13,7 @@ interface Props {
 
 export function CategoriasPopulares({ categorias }: Props) {
   return (
-    <section className="max-w-6xl w-full mt-10">
+    <div className="max-w-6xl w-full mt-10">
       <h2 className="text-2xl md:text-3xl font-semibold mb-6 text-center">
         Categorias Populares
       </h2>
@@ -37,6 +36,6 @@ export function CategoriasPopulares({ categorias }: Props) {
           </p>
         )}
       </div>
-    </section>
+    </div>
   )
 }
