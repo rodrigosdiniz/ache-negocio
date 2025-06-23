@@ -1,36 +1,18 @@
-'use client'
-
-import Link from 'next/link'
-
 export default function Footer() {
   return (
-    <footer style={{
-      padding: '2rem 1rem',
-      backgroundColor: '#f4f4f4',
-      textAlign: 'center',
-      borderTop: '1px solid #ddd',
-      marginTop: '2rem'
-    }}>
-      <p><strong>Ache Negócio SaaS</strong> © {new Date().getFullYear()}</p>
-
-      <p>
-        Desenvolvido por Rodrigo Diniz ·
-        <a href="mailto:contato@achenegocio.com.br" style={{ marginLeft: '0.3rem', color: '#0070f3' }}>
-          contato@achenegocio.com.br
-        </a>
-      </p>
-
-      <p>
-        <a href="https://www.instagram.com/nexu.sengenharia1/" target="_blank" rel="noopener noreferrer">
+    <footer className="bg-gray-100 border-t mt-10 py-8 text-center text-sm text-gray-600">
+      <p>© {new Date().getFullYear()} AcheNegócio. Todos os direitos reservados.</p>
+      <div className="mt-2 space-x-4">
+        <a href="https://instagram.com/nexu.sengenharia1" target="_blank" className="hover:text-blue-600">
           Instagram
-        </a> ·{' '}
-        <a href="https://www.facebook.com/profile.php?id=61568743817647" target="_blank" rel="noopener noreferrer">
+        </a>
+        <a href="https://www.facebook.com/profile.php?id=61568743817647" target="_blank" className="hover:text-blue-600">
           Facebook
-        </a> ·{' '}
-        <Link href="/contato" style={{ color: '#0070f3' }}>
-          Fale Conosco
-        </Link>
-      </p>
+        </a>
+        <a href="https://wa.me/5521977814334" target="_blank" className="hover:text-blue-600">
+          WhatsApp
+        </a>
+      </div>
     </footer>
   )
 }
